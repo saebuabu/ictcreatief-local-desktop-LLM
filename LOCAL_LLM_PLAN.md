@@ -169,8 +169,15 @@ wsl --install -d Ubuntu
 - Connects to Ollama's API at `http://localhost:11434`
 
 **Installation via Docker (recommended — requires Phase 5):**
+
+Een `docker-compose.yml` staat in de root van dit project. Start Open WebUI met:
 ```bash
-docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main
+docker compose up -d
+```
+
+Stop met:
+```bash
+docker compose down
 ```
 
 Open daarna http://localhost:3000 in je browser.
