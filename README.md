@@ -13,6 +13,7 @@ Geen cloudverbinding nodig — alle data blijft lokaal.
 | [`MBO_Experimenten_Ollama.md`](MBO_Experimenten_Ollama.md) | Praktische experimenten voor MBO-studenten en docenten |
 | [`docker-compose.yml`](docker-compose.yml) | Docker Compose configuratie voor Open WebUI |
 | [`.env`](.env) | Configuratievariabelen (poort, Ollama URL, image tag) |
+| [`IDEEEN.md`](IDEEEN.md) | Uitbreidingsideeën: agentic system, MCP, RAG, n8n, en meer |
 
 ---
 
