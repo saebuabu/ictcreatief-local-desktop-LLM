@@ -245,5 +245,30 @@ ollama run mbo-assistent
 
 ---
 
+## Open WebUI starten
+
+Open WebUI biedt een ChatGPT-achtige interface voor Ollama, geschikt voor dagelijks gebruik door studenten en docenten.
+
+**Vereisten:**
+- Docker Desktop geïnstalleerd en actief
+- Ollama draait op de achtergrond
+
+**Starten:**
+```bash
+docker compose up -d
+```
+
+Open daarna **http://localhost:3000** in de browser.
+
+**Stoppen:**
+```bash
+docker compose down
+```
+
+> Het `docker-compose.yml` bestand staat in de root van dit project.
+> Alle chatgeschiedenis en instellingen blijven bewaard in een Docker volume.
+
+---
+
 *Document aangemaakt voor gebruik op een lokale Ollama + Open WebUI installatie.*
 *Geen data verlaat de school — privacy-proof voor gebruik met leerlinginformatie.*
