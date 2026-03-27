@@ -29,15 +29,15 @@ Na deze opdracht weet je:
 
 ---
 
-## Weekplanning (eind maart – eind juni)
+## Weekplanning (eind maart – begin juni)
 
-| Weken | Fase | Activiteit |
-|-------|------|-----------|
-| 1–2 | Startstap | Persoonlijk leerplan opstellen |
-| 3–4 | Fase 1 | Verkennen: AI-omgeving onderzoeken + vergelijkingstest |
-| 5–11 | Fase 2 | Bouwen: prototype ontwerpen en ontwikkelen |
-| 12–13 | Fase 3 | Kritisch analyseren en testen |
-| 13 | Afronden | Verslag afronden + presentatie/demo |
+| Weken | Fase | Activiteit | Status |
+|-------|------|-----------|--------|
+| 1–2 | Startstap | Persoonlijk leerplan opstellen | *afgerond* |
+| 3–4 | Fase 1 | Verkennen: AI-omgeving onderzoeken + vergelijkingstest | |
+| 5–9 | Fase 2 | Bouwen: prototype ontwerpen en ontwikkelen | |
+| 10–11 | Fase 3 | Kritisch analyseren en testen | |
+| 12 | Afronden | Verslag afronden + presentatie/demo | |
 
 ---
 
@@ -52,7 +52,7 @@ Na deze opdracht weet je:
 
 ---
 
-## Startstap — Persoonlijk leerplan *(week 1–2)*
+## Startstap — Persoonlijk leerplan *(week 1–2 — afgerond)*
 
 Voordat je begint, stel je een kort persoonlijk leerplan op. Dit is verplicht onderdeel van keuzedeel K0505 (W1 + W2) en lever je in als onderdeel van je eindverslag.
 
@@ -70,13 +70,28 @@ Formuleer **3 à 5 concrete leerdoelen**. Gebruik de structuur:
 
 > *"Aan het einde van deze opdracht kan ik … [vaardigheid], zodat … [toepassing]."*
 
-### 3. Tijdsplanning
+### 3. Leermodaliteiten
+
+Beschrijf hoe je de stof gaat leren:
+
+- Welke bronnen gebruik je? *(bijv. officiële documentatie, online cursus, videolessen, tutorials)*
+- Waarom zijn deze bronnen geschikt voor jouw leerdoelen?
+
+### 4. Tijdsplanning
 
 Werk de weekplanning hierboven uit naar jouw eigen situatie:
 
 - Wanneer werk je aan welke fase?
 - Welke mijlpalen stel je voor jezelf?
 - Wat doe je als je ergens vastloopt?
+
+### 5. Afstemgesprek met begeleider
+
+Bespreek je leerplan met je docent/begeleider voordat je verder gaat:
+
+- Licht je keuze toe en onderbouw waarom lokale AI relevant is voor de arbeidsmarkt
+- Stem je leerdoelen en planning af
+- Verwerk eventuele feedback in je leerplan
 
 ---
 
@@ -101,7 +116,7 @@ Noteer het verschil in uitkomst. Denk aan: snelheid, kwaliteit, stijl, volledigh
 
 ---
 
-## Fase 2 — Bouwen *(week 5–11)*
+## Fase 2 — Bouwen *(week 5–9)*
 
 Bedenk, ontwerp en ontwikkel een lokale AI-toepassing die het onderwijs verbetert.
 
@@ -136,7 +151,7 @@ Bouw een werkend prototype: een chatbot of een applicatie.
 
 ---
 
-## Fase 3 — Kritisch analyseren *(week 12–13)*
+## Fase 3 — Kritisch analyseren *(week 10–11)*
 
 Test je toepassing op de volgende vijf aspecten:
 
@@ -174,11 +189,22 @@ Beantwoord na het testen:
 
 ---
 
+## Voortgangsmomenten
+
+Er zijn twee verplichte check-ins met je begeleider:
+
+| Moment | Week | Wat bespreek je |
+|--------|------|-----------------|
+| Check-in 1 | Week 4 | Stand van zaken Fase 1 + voortgang op je leerplan |
+| Check-in 2 | Week 9 | Werkend prototype tonen + knelpunten bespreken |
+
+---
+
 ## Inleveren
 
 Lever aan het einde van de opdracht in:
 
-- [ ] Persoonlijk leerplan met keuzeonderbouwing, leerdoelen en tijdsplanning *(Startstap — W1 + W2)*
+- [ ] Persoonlijk leerplan met keuzeonderbouwing, leerdoelen, leermodaliteiten en tijdsplanning — afgestemd met begeleider *(Startstap — W1 + W2)*
 - [ ] Verslag van het vergelijkingsonderzoek *(Fase 1)*
 - [ ] Werkend prototype + korte technische beschrijving *(Fase 2)*
 - [ ] Testrapport met bevindingen per analysepunt *(Fase 3)*
