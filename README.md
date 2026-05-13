@@ -71,6 +71,40 @@ Zie [`LOCAL_LLM_PLAN.md`](LOCAL_LLM_PLAN.md) voor een volledig overzicht.
 
 ---
 
+## Claude Code CLI
+
+[Claude Code](https://claude.ai/code) is Anthropic's AI-assistent in de terminal. Vanuit deze projectmap kun je Claude inzetten om configuraties aan te passen, scripts te schrijven of problemen te debuggen — zonder browser.
+
+### Installatie
+
+**Vereiste:** Node.js 18+ via [nodejs.org](https://nodejs.org) (LTS)
+
+```powershell
+npm install -g @anthropic-ai/claude-code
+```
+
+### Gebruik
+
+Start Claude vanuit de projectmap:
+
+```powershell
+cd C:\Users\P99900086\source\repos\OllamaLLM
+claude
+```
+
+Bij de eerste keer opstarten word je gevraagd in te loggen via je Anthropic-account.
+
+### Wat je ermee kunt doen
+
+- Docker Compose configuratie aanpassen of debuggen
+- Nieuwe Ollama Modelfiles schrijven
+- Experimenten uitwerken voor MBO-studenten
+- Vragen stellen over de projectbestanden
+
+> Claude Code heeft geen internetverbinding nodig voor het lezen van lokale bestanden — alleen voor de API-aanroepen naar Anthropic.
+
+---
+
 ## Voor het MBO
 
 [`MBO_Experimenten_Ollama.md`](MBO_Experimenten_Ollama.md) bevat kant-en-klare experimenten per afdeling:
