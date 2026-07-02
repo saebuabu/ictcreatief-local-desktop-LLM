@@ -1,7 +1,7 @@
 # Lokale LLM met Ollama — Windows 11
 
 Een lokale AI-omgeving op basis van [Ollama](https://ollama.com) en [Open WebUI](https://github.com/open-webui/open-webui), draaiend op Windows 11.
-Geen cloudverbinding nodig — alle data blijft lokaal.
+Geen cloudverbinding nodig — alle data blijft lokaal....
 
 ---
 
