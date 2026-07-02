@@ -15,15 +15,26 @@ Gericht op gebruik binnen MBO-onderwijs — privacy-proof, geen cloudverbinding.
 - **Shell:** bash (via Claude Code)
 - **Ollama:** actief als Windows-service op poort `11434`
 - **Open WebUI:** draait via Docker op poort `3000`
+- **Claude Code:** vanaf nu direct geïnstalleerd en in gebruik op deze LLM-machine zelf (niet op een aparte devmachine)
 
 ---
 
 ## Geïnstalleerde Ollama-modellen
 
-| Model | Gebruik |
-|---|---|
-| `qwen2.5-coder:14b` | Code-gerelateerde taken |
-| `deepseek-r1:14b` | Redeneren en analyse |
+| Model | Grootte | Gebruik |
+|---|---|---|
+| `qwen2.5-coder:14b` | 9.0 GB | Code-gerelateerde taken |
+| `deepseek-r1:14b` | 9.0 GB | Redeneren en analyse |
+| `llama3.1:8b` | 4.9 GB | Algemeen gebruik |
+| `llama3.2-vision:11b` | 7.8 GB | Vision / multimodaal |
+| `qwen3-vl:latest` | 6.1 GB | Vision / multimodaal |
+| `qwen3.5:0.8b` | 1.0 GB | Klein/snel model |
+| `lukey03/qwen3.5-9b-abliterated:latest` | 5.6 GB | Uncensored variant |
+| `huggingface.co/unsloth/gpt-oss-20b-GGUF:latest` | 11 GB | Groot algemeen model |
+| `huggingface.co/unsloth/gemma-3-12b-it-GGUF:latest` | 8.2 GB | Instruct-model |
+| `huggingface.co/city96/FLUX.1-dev-gguf:latest` | 23 GB | Image generation |
+| `huggingface.co/city96/stable-diffusion-3.5-large-turbo-gguf:latest` | 16 GB | Image generation |
+| `huggingface.co/ChristianAzinn/gte-small-gguf:latest` | 25 MB | Embeddings |
 
 Sweet spot voor dit systeem: **7B–14B parameter modellen** (Q4_K_M of Q5_K_M quantisatie).
 
