@@ -102,3 +102,11 @@ Verwacht resultaat: een JSON-object met een `samenvatting`-veld.
 Docenten en studenten kunnen no-code AI-workflows bouwen bovenop de lokale Ollama-modellen —
 triggers, webhooks of andere n8n-nodes gekoppeld aan een AI-stap — volledig lokaal en zonder
 cloudverbinding.
+
+---
+
+## Volgende stap: OneDrive-opdrachten automatisch reviewen
+
+Zie [`docs/n8n-onedrive-opdracht-review.md`](n8n-onedrive-opdracht-review.md) voor een workflow
+die een gedeelde OneDrive-map met leerlinginzendingen periodiek checkt en per upload een
+Ollama-samenvatting + review wegschrijft naar een docent-only map.

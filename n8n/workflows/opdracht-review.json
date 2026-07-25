@@ -1,0 +1,252 @@
+{
+  "id": "opdr8chtReview01",
+  "name": "OneDrive opdrachten -> Ollama samenvatting + review",
+  "nodes": [
+    {
+      "id": "n1-schedule-trigger",
+      "name": "Elke 10 minuten",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [180, 400],
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 10 }]
+        }
+      }
+    },
+    {
+      "id": "n2-get-children",
+      "name": "Bestanden in uploadmap",
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 1.1,
+      "position": [420, 400],
+      "parameters": {
+        "resource": "folder",
+        "operation": "getChildren",
+        "folderId": "VUL-IN: ID van de leerling-uploadmap"
+      }
+    },
+    {
+      "id": "n3-filter-new",
+      "name": "Filter nieuwe bestanden",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 400],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nif (!staticData.processedIds) staticData.processedIds = [];\nconst processed = new Set(staticData.processedIds);\n\nconst newItems = [];\nfor (const item of $input.all()) {\n  const d = item.json;\n  // alleen echte bestanden (geen submappen), en nog niet eerder verwerkt\n  if (d.file && !processed.has(d.id)) {\n    newItems.push({ json: d });\n  }\n}\nreturn newItems;"
+      }
+    },
+    {
+      "id": "n4-download",
+      "name": "Download bestand",
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 1.1,
+      "position": [900, 400],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "resource": "file",
+        "operation": "download",
+        "fileId": "={{ $json.id }}",
+        "binaryPropertyName": "data"
+      }
+    },
+    {
+      "id": "n5-switch-type",
+      "name": "Bestandstype",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [1140, 400],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "outputKey": "pdf",
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.name.split('.').pop().toLowerCase() }}",
+                    "rightValue": "pdf",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "tekst",
+              "conditions": {
+                "combinator": "or",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.name.split('.').pop().toLowerCase() }}",
+                    "rightValue": "txt",
+                    "operator": { "type": "string", "operation": "equals" }
+                  },
+                  {
+                    "leftValue": "={{ $json.name.split('.').pop().toLowerCase() }}",
+                    "rightValue": "md",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "niet ondersteund"
+        }
+      }
+    },
+    {
+      "id": "n6a-extract-pdf",
+      "name": "Tekst uit PDF halen",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [1400, 260],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "data",
+        "options": { "joinPages": true }
+      }
+    },
+    {
+      "id": "n6b-extract-text",
+      "name": "Tekst uit txt-md halen",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [1400, 400],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "data",
+        "destinationKey": "text"
+      }
+    },
+    {
+      "id": "n7-build-prompt",
+      "name": "Bouw prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1640, 330],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const tekst = ($json.text || '').slice(0, 12000);\nconst prompt = `Je bent een AI-assistent voor een MBO-docent. Analyseer de volgende inleveropdracht van een leerling.\\n\\nBestandsnaam: ${$json.name}\\n\\nOpdrachttekst:\\n\"\"\"\\n${tekst}\\n\"\"\"\\n\\nGeef het antwoord in het Nederlands, exact in dit Markdown-formaat:\\n\\n## Samenvatting\\n(2-4 zinnen die de kern van de inzending samenvatten)\\n\\n## Feedback\\n(sterke punten, verbeterpunten en duidelijkheid, in enkele bullet points)`;\nreturn { json: { ...$json, prompt } };"
+      }
+    },
+    {
+      "id": "n8-ollama",
+      "name": "Ollama: samenvatting + review",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1880, 330],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"llama3.1:8b\", \"prompt\": $json.prompt, \"stream\": false } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "n9-build-output-ok",
+      "name": "Bouw outputbestand",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2120, 330],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const orig = $('Bouw prompt').item.json;\nconst now = new Date().toISOString();\nconst md = `# Review: ${orig.name}\\n\\n_Verwerkt op: ${now}_\\n\\n${$json.response || '(geen antwoord ontvangen van Ollama)'}\\n`;\nreturn { json: { outputFileName: orig.name.replace(/\\.[^.]+$/, '') + '__review.md', outputContent: md, originalId: orig.id } };"
+      }
+    },
+    {
+      "id": "n10-build-output-skip",
+      "name": "Niet ondersteund",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1640, 560],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const now = new Date().toISOString();\nconst md = `# Niet verwerkt: ${$json.name}\\n\\n_Tijdstip: ${now}_\\n\\nDit bestandstype wordt niet ondersteund door deze workflow. Vraag de leerling het opnieuw te uploaden als PDF, .txt of .md.\\n`;\nreturn { json: { outputFileName: $json.name.replace(/\\.[^.]+$/, '') + '__niet-verwerkt.md', outputContent: md, originalId: $json.id } };"
+      }
+    },
+    {
+      "id": "n11-mark-processed",
+      "name": "Markeer als verwerkt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2360, 400],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nif (!staticData.processedIds) staticData.processedIds = [];\nstaticData.processedIds.push($json.originalId);\n// begrens de lijst tot de laatste 500 om onbeperkte groei te voorkomen\nif (staticData.processedIds.length > 500) {\n  staticData.processedIds = staticData.processedIds.slice(-500);\n}\nreturn { json: $json };"
+      }
+    },
+    {
+      "id": "n12-upload",
+      "name": "Upload naar docentmap",
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 1.1,
+      "position": [2600, 400],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "fileName": "={{ $json.outputFileName }}",
+        "parentId": "VUL-IN: ID van de docent-only outputmap",
+        "binaryData": false,
+        "fileContent": "={{ $json.outputContent }}"
+      }
+    }
+  ],
+  "connections": {
+    "Elke 10 minuten": {
+      "main": [[{ "node": "Bestanden in uploadmap", "type": "main", "index": 0 }]]
+    },
+    "Bestanden in uploadmap": {
+      "main": [[{ "node": "Filter nieuwe bestanden", "type": "main", "index": 0 }]]
+    },
+    "Filter nieuwe bestanden": {
+      "main": [[{ "node": "Download bestand", "type": "main", "index": 0 }]]
+    },
+    "Download bestand": {
+      "main": [[{ "node": "Bestandstype", "type": "main", "index": 0 }]]
+    },
+    "Bestandstype": {
+      "main": [
+        [{ "node": "Tekst uit PDF halen", "type": "main", "index": 0 }],
+        [{ "node": "Tekst uit txt-md halen", "type": "main", "index": 0 }],
+        [{ "node": "Niet ondersteund", "type": "main", "index": 0 }]
+      ]
+    },
+    "Tekst uit PDF halen": {
+      "main": [[{ "node": "Bouw prompt", "type": "main", "index": 0 }]]
+    },
+    "Tekst uit txt-md halen": {
+      "main": [[{ "node": "Bouw prompt", "type": "main", "index": 0 }]]
+    },
+    "Bouw prompt": {
+      "main": [[{ "node": "Ollama: samenvatting + review", "type": "main", "index": 0 }]]
+    },
+    "Ollama: samenvatting + review": {
+      "main": [[{ "node": "Bouw outputbestand", "type": "main", "index": 0 }]]
+    },
+    "Bouw outputbestand": {
+      "main": [[{ "node": "Markeer als verwerkt", "type": "main", "index": 0 }]]
+    },
+    "Niet ondersteund": {
+      "main": [[{ "node": "Markeer als verwerkt", "type": "main", "index": 0 }]]
+    },
+    "Markeer als verwerkt": {
+      "main": [[{ "node": "Upload naar docentmap", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -14,6 +14,7 @@ Geen cloudverbinding nodig — alle data blijft lokaal....
 | [`docker-compose.yml`](docker-compose.yml) | Docker Compose configuratie voor Open WebUI en n8n |
 | [`.env`](.env) | Configuratievariabelen (poort, Ollama URL, image tag) |
 | [`docs/n8n-setup.md`](docs/n8n-setup.md) | n8n koppelen aan Ollama: setup, voorbeeldworkflow, troubleshooting |
+| [`docs/n8n-onedrive-opdracht-review.md`](docs/n8n-onedrive-opdracht-review.md) | OneDrive-opdrachten automatisch laten samenvatten en beoordelen |
 | [`IDEEEN.md`](IDEEEN.md) | Uitbreidingsideeën: agentic system, MCP, RAG, en meer |
 
 ---
