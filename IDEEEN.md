@@ -79,7 +79,7 @@ Zie ook het voorbeeld in `MBO_Experimenten_Ollama.md`.
 
 ---
 
-## 5. Workflow Automation met n8n
+## 5. Workflow Automation met n8n — ✅ geïmplementeerd
 
 **Wat is het?**
 n8n is een visuele workflow builder (open source, zelf te hosten) waarmee je Ollama
@@ -89,10 +89,10 @@ als AI-stap kunt aanroepen binnen een groter automatiseringsproces.
 AI koppelen aan triggers, webhooks, e-mail, databases en externe APIs — zonder code.
 Denk aan: "Als er een nieuw formulier binnenkomt, laat Ollama een samenvatting maken."
 
-**Mogelijke aanpak:**
-- n8n via Docker toevoegen aan de `docker-compose.yml`
-- Ollama aanroepen via de ingebouwde Ollama-node of een HTTP Request node naar `localhost:11434`
-- Zie: [n8n Ollama integratie](https://n8n.io/integrations/ollama/)
+**Status:** n8n draait als service naast Open WebUI in `docker-compose.yml`, bereikt Ollama via
+`http://host.docker.internal:11434`, en er is een werkende voorbeeldworkflow
+(`n8n/workflows/samenvatten-webhook.json`: webhook → Ollama-samenvatting → response).
+Zie [`docs/n8n-setup.md`](docs/n8n-setup.md) voor setup, eerste login en de voorbeeldworkflow.
 
 ---
 

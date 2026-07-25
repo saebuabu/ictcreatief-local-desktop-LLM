@@ -11,9 +11,10 @@ Geen cloudverbinding nodig — alle data blijft lokaal....
 |---|---|
 | [`LOCAL_LLM_PLAN.md`](LOCAL_LLM_PLAN.md) | Volledig installatieplan: hardware, modellen, Ollama, Docker en Open WebUI |
 | [`MBO_Experimenten_Ollama.md`](MBO_Experimenten_Ollama.md) | Praktische experimenten voor MBO-studenten en docenten |
-| [`docker-compose.yml`](docker-compose.yml) | Docker Compose configuratie voor Open WebUI |
+| [`docker-compose.yml`](docker-compose.yml) | Docker Compose configuratie voor Open WebUI en n8n |
 | [`.env`](.env) | Configuratievariabelen (poort, Ollama URL, image tag) |
-| [`IDEEEN.md`](IDEEEN.md) | Uitbreidingsideeën: agentic system, MCP, RAG, n8n, en meer |
+| [`docs/n8n-setup.md`](docs/n8n-setup.md) | n8n koppelen aan Ollama: setup, voorbeeldworkflow, troubleshooting |
+| [`IDEEEN.md`](IDEEEN.md) | Uitbreidingsideeën: agentic system, MCP, RAG, en meer |
 
 ---
 
@@ -29,7 +30,7 @@ Download en installeer Ollama via [ollama.com](https://ollama.com). Ollama draai
 ollama pull llama3.1:8b
 ```
 
-### 3. Start Open WebUI
+### 3. Start Open WebUI en n8n
 
 Zorg dat Docker Desktop actief is, dan:
 
@@ -37,7 +38,9 @@ Zorg dat Docker Desktop actief is, dan:
 docker compose up -d
 ```
 
-Open daarna **http://localhost:3000** in je browser.
+Open daarna **http://localhost:3000** (Open WebUI) of **http://localhost:5678** (n8n) in je
+browser. Zie [`docs/n8n-setup.md`](docs/n8n-setup.md) voor de eerste-keer-setup van n8n en een
+voorbeeldworkflow die Ollama aanroept.
 
 ### 4. Stoppen
 
@@ -55,6 +58,9 @@ Pas `.env` aan om de standaardinstellingen te wijzigen:
 WEBUI_PORT=3000                                          # Poort in de browser
 OLLAMA_BASE_URL=http://host.docker.internal:11434        # URL naar Ollama
 WEBUI_IMAGE_TAG=main                                     # Image versie
+
+N8N_PORT=5678                                            # Poort voor de n8n-editor
+N8N_IMAGE_TAG=latest                                     # Image versie
 ```
 
 ---

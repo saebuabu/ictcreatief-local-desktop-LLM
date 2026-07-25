@@ -1,0 +1,59 @@
+{
+  "id": "sam3nvatt3nWebhook01",
+  "name": "Samenvatten via Ollama",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "samenvatten",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "1a1b1c1d-0001-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "5c6f7a8b-0002-4000-8000-000000000002"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"llama3.1:8b\", \"prompt\": \"Vat dit kort samen in het Nederlands: \" + $json.body.tekst, \"stream\": false } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [460, 300],
+      "id": "2a2b2c2d-0003-4000-8000-000000000003",
+      "name": "Ollama Samenvatten"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"samenvatting\": $json.response } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [680, 300],
+      "id": "3a3b3c3d-0004-4000-8000-000000000004",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Ollama Samenvatten", "type": "main", "index": 0 }]]
+    },
+    "Ollama Samenvatten": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
