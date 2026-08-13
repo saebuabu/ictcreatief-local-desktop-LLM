@@ -1,0 +1,124 @@
+{
+  "id": "w0rkerAgent01",
+  "name": "Agentic Systems - Worker",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "worker",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "8a1b1c1d-1001-4000-8000-100000000001",
+      "name": "Ontvang bericht",
+      "webhookId": "8b6f7a8b-1002-4000-8000-100000000002"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"llama3.1:8b\", \"prompt\": $json.body.content, \"stream\": false } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [460, 300],
+      "id": "8a2b2c2d-1003-4000-8000-100000000003",
+      "name": "Vraag Ollama"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "conversation_id",
+              "value": "={{ $('Ontvang bericht').item.json.body.conversation_id }}",
+              "type": "string"
+            },
+            {
+              "id": "b2",
+              "name": "message_id",
+              "value": "={{ 'worker-' + $now.toMillis() }}",
+              "type": "string"
+            },
+            {
+              "id": "b3",
+              "name": "from",
+              "value": "worker",
+              "type": "string"
+            },
+            {
+              "id": "b4",
+              "name": "to",
+              "value": "coordinator",
+              "type": "string"
+            },
+            {
+              "id": "b5",
+              "name": "performative",
+              "value": "inform",
+              "type": "string"
+            },
+            {
+              "id": "b6",
+              "name": "content",
+              "value": "={{ $json.response }}",
+              "type": "string"
+            },
+            {
+              "id": "b7",
+              "name": "meta.model",
+              "value": "ollama:llama3.1:8b",
+              "type": "string"
+            },
+            {
+              "id": "b8",
+              "name": "meta.timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300],
+      "id": "8a3b3c3d-1004-4000-8000-100000000004",
+      "name": "Bouw inform-bericht"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [900, 300],
+      "id": "8a4b4c4d-1005-4000-8000-100000000005",
+      "name": "Antwoord aan Coordinator"
+    }
+  ],
+  "connections": {
+    "Ontvang bericht": {
+      "main": [[{ "node": "Vraag Ollama", "type": "main", "index": 0 }]]
+    },
+    "Vraag Ollama": {
+      "main": [[{ "node": "Bouw inform-bericht", "type": "main", "index": 0 }]]
+    },
+    "Bouw inform-bericht": {
+      "main": [[{ "node": "Antwoord aan Coordinator", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

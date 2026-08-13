@@ -1,0 +1,124 @@
+{
+  "id": "criticAgent01",
+  "name": "Agentic Systems - Critic",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "critic",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "7a1b1c1d-3001-4000-8000-300000000001",
+      "name": "Ontvang beoordelingsverzoek",
+      "webhookId": "7b6f7a8b-3002-4000-8000-300000000002"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"llama3.1:8b\", \"prompt\": $json.body.content, \"stream\": false } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [460, 300],
+      "id": "7a2b2c2d-3003-4000-8000-300000000003",
+      "name": "Vraag Ollama om oordeel"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "conversation_id",
+              "value": "={{ $('Ontvang beoordelingsverzoek').item.json.body.conversation_id }}",
+              "type": "string"
+            },
+            {
+              "id": "c2",
+              "name": "message_id",
+              "value": "={{ 'critic-' + $now.toMillis() }}",
+              "type": "string"
+            },
+            {
+              "id": "c3",
+              "name": "from",
+              "value": "critic",
+              "type": "string"
+            },
+            {
+              "id": "c4",
+              "name": "to",
+              "value": "coordinator",
+              "type": "string"
+            },
+            {
+              "id": "c5",
+              "name": "performative",
+              "value": "={{ $json.response.trim().toUpperCase().startsWith('PASS') ? 'inform' : 'critique' }}",
+              "type": "string"
+            },
+            {
+              "id": "c6",
+              "name": "content",
+              "value": "={{ $json.response }}",
+              "type": "string"
+            },
+            {
+              "id": "c7",
+              "name": "meta.model",
+              "value": "ollama:llama3.1:8b",
+              "type": "string"
+            },
+            {
+              "id": "c8",
+              "name": "meta.timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300],
+      "id": "7a3b3c3d-3004-4000-8000-300000000004",
+      "name": "Bouw oordeel-bericht"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [900, 300],
+      "id": "7a4b4c4d-3005-4000-8000-300000000005",
+      "name": "Antwoord aan Coordinator"
+    }
+  ],
+  "connections": {
+    "Ontvang beoordelingsverzoek": {
+      "main": [[{ "node": "Vraag Ollama om oordeel", "type": "main", "index": 0 }]]
+    },
+    "Vraag Ollama om oordeel": {
+      "main": [[{ "node": "Bouw oordeel-bericht", "type": "main", "index": 0 }]]
+    },
+    "Bouw oordeel-bericht": {
+      "main": [[{ "node": "Antwoord aan Coordinator", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

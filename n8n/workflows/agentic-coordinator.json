@@ -1,0 +1,445 @@
+{
+  "id": "c00rdinatorAgent01",
+  "name": "Agentic Systems - Coordinator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "coordinator",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 300],
+      "id": "9a1b1c1d-2001-4000-8000-200000000001",
+      "name": "Ontvang taak",
+      "webhookId": "9b6f7a8b-2002-4000-8000-200000000002"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "conversation_id",
+              "value": "={{ $json.body.conversation_id || $execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "message_id",
+              "value": "={{ 'coord-' + $now.toMillis() }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "from",
+              "value": "coordinator",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "to",
+              "value": "worker",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "performative",
+              "value": "request",
+              "type": "string"
+            },
+            {
+              "id": "a6",
+              "name": "content",
+              "value": "={{ $json.body.task }}",
+              "type": "string"
+            },
+            {
+              "id": "a7",
+              "name": "meta.timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 300],
+      "id": "9a2b2c2d-2003-4000-8000-200000000003",
+      "name": "Bouw request-bericht"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/worker",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [440, 300],
+      "id": "9a3b3c3d-2004-4000-8000-200000000004",
+      "name": "Roep Worker aan"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d1",
+              "name": "conversation_id",
+              "value": "={{ $json.conversation_id }}",
+              "type": "string"
+            },
+            {
+              "id": "d2",
+              "name": "message_id",
+              "value": "={{ 'crit-' + $now.toMillis() }}",
+              "type": "string"
+            },
+            {
+              "id": "d3",
+              "name": "from",
+              "value": "coordinator",
+              "type": "string"
+            },
+            {
+              "id": "d4",
+              "name": "to",
+              "value": "critic",
+              "type": "string"
+            },
+            {
+              "id": "d5",
+              "name": "performative",
+              "value": "request",
+              "type": "string"
+            },
+            {
+              "id": "d6",
+              "name": "content",
+              "value": "={{ 'Taak: ' + $('Ontvang taak').item.json.body.task + '\n\nAntwoord van de Worker:\n' + $json.content + '\n\nBeoordeel dit antwoord. Reageer ALLEEN met \"PASS\" als het klopt en volledig is, of met \"FAIL: <korte reden>\" als het niet klopt of onvolledig is.' }}",
+              "type": "string"
+            },
+            {
+              "id": "d7",
+              "name": "meta.timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [660, 300],
+      "id": "9a5b5c5d-2006-4000-8000-200000000006",
+      "name": "Bouw review-verzoek"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/critic",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [880, 300],
+      "id": "9a6b6c6d-2007-4000-8000-200000000007",
+      "name": "Roep Criticus aan"
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "outputKey": "herzien",
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.performative }}",
+                    "rightValue": "critique",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "goedgekeurd"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [1100, 300],
+      "id": "9a7b7c7d-2008-4000-8000-200000000008",
+      "name": "Beslissing: goedgekeurd of herzien?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1",
+              "name": "conversation_id",
+              "value": "={{ $json.conversation_id }}",
+              "type": "string"
+            },
+            {
+              "id": "e2",
+              "name": "message_id",
+              "value": "={{ 'coord-revise-' + $now.toMillis() }}",
+              "type": "string"
+            },
+            {
+              "id": "e3",
+              "name": "from",
+              "value": "coordinator",
+              "type": "string"
+            },
+            {
+              "id": "e4",
+              "name": "to",
+              "value": "worker",
+              "type": "string"
+            },
+            {
+              "id": "e5",
+              "name": "performative",
+              "value": "revise",
+              "type": "string"
+            },
+            {
+              "id": "e6",
+              "name": "content",
+              "value": "={{ 'Herzie je antwoord op basis van deze kritiek: ' + $json.content + '\n\nOorspronkelijke taak: ' + $('Ontvang taak').item.json.body.task + '\n\nJouw vorige antwoord: ' + $('Roep Worker aan').item.json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "e7",
+              "name": "meta.timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1320, 180],
+      "id": "9a8b8c8d-2009-4000-8000-200000000009",
+      "name": "Bouw revise-verzoek"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/worker",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1540, 180],
+      "id": "9a9b9c9d-2010-4000-8000-200000000010",
+      "name": "Roep Worker aan (herziening)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "conversation_id",
+              "value": "={{ $json.conversation_id }}",
+              "type": "string"
+            },
+            {
+              "id": "f2",
+              "name": "message_id",
+              "value": "={{ 'coord-final-' + $now.toMillis() }}",
+              "type": "string"
+            },
+            {
+              "id": "f3",
+              "name": "from",
+              "value": "coordinator",
+              "type": "string"
+            },
+            {
+              "id": "f4",
+              "name": "to",
+              "value": "requester",
+              "type": "string"
+            },
+            {
+              "id": "f5",
+              "name": "performative",
+              "value": "inform",
+              "type": "string"
+            },
+            {
+              "id": "f6",
+              "name": "content",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "f7",
+              "name": "meta.herzien",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "f8",
+              "name": "meta.kritiek",
+              "value": "={{ $('Roep Criticus aan').item.json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "f9",
+              "name": "meta.timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1760, 180],
+      "id": "9aabbcbd-2011-4000-8000-200000000011",
+      "name": "Bouw eindantwoord (herzien)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "g1",
+              "name": "conversation_id",
+              "value": "={{ $json.conversation_id }}",
+              "type": "string"
+            },
+            {
+              "id": "g2",
+              "name": "message_id",
+              "value": "={{ 'coord-final-' + $now.toMillis() }}",
+              "type": "string"
+            },
+            {
+              "id": "g3",
+              "name": "from",
+              "value": "coordinator",
+              "type": "string"
+            },
+            {
+              "id": "g4",
+              "name": "to",
+              "value": "requester",
+              "type": "string"
+            },
+            {
+              "id": "g5",
+              "name": "performative",
+              "value": "inform",
+              "type": "string"
+            },
+            {
+              "id": "g6",
+              "name": "content",
+              "value": "={{ $('Roep Worker aan').item.json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "g7",
+              "name": "meta.herzien",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "g8",
+              "name": "meta.timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1320, 420],
+      "id": "9acbccbd-2012-4000-8000-200000000012",
+      "name": "Bouw eindantwoord (direct goedgekeurd)"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1980, 300],
+      "id": "9a4b4c4d-2005-4000-8000-200000000005",
+      "name": "Antwoord aan aanvrager"
+    }
+  ],
+  "connections": {
+    "Ontvang taak": {
+      "main": [[{ "node": "Bouw request-bericht", "type": "main", "index": 0 }]]
+    },
+    "Bouw request-bericht": {
+      "main": [[{ "node": "Roep Worker aan", "type": "main", "index": 0 }]]
+    },
+    "Roep Worker aan": {
+      "main": [[{ "node": "Bouw review-verzoek", "type": "main", "index": 0 }]]
+    },
+    "Bouw review-verzoek": {
+      "main": [[{ "node": "Roep Criticus aan", "type": "main", "index": 0 }]]
+    },
+    "Roep Criticus aan": {
+      "main": [[{ "node": "Beslissing: goedgekeurd of herzien?", "type": "main", "index": 0 }]]
+    },
+    "Beslissing: goedgekeurd of herzien?": {
+      "main": [
+        [{ "node": "Bouw revise-verzoek", "type": "main", "index": 0 }],
+        [{ "node": "Bouw eindantwoord (direct goedgekeurd)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Bouw revise-verzoek": {
+      "main": [[{ "node": "Roep Worker aan (herziening)", "type": "main", "index": 0 }]]
+    },
+    "Roep Worker aan (herziening)": {
+      "main": [[{ "node": "Bouw eindantwoord (herzien)", "type": "main", "index": 0 }]]
+    },
+    "Bouw eindantwoord (herzien)": {
+      "main": [[{ "node": "Antwoord aan aanvrager", "type": "main", "index": 0 }]]
+    },
+    "Bouw eindantwoord (direct goedgekeurd)": {
+      "main": [[{ "node": "Antwoord aan aanvrager", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

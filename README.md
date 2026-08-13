@@ -15,6 +15,7 @@ Geen cloudverbinding nodig — alle data blijft lokaal....
 | [`.env`](.env) | Configuratievariabelen (poort, Ollama URL, image tag) |
 | [`docs/n8n-setup.md`](docs/n8n-setup.md) | n8n koppelen aan Ollama: setup, voorbeeldworkflow, troubleshooting |
 | [`docs/n8n-onedrive-opdracht-review.md`](docs/n8n-onedrive-opdracht-review.md) | OneDrive-opdrachten automatisch laten samenvatten en beoordelen |
+| [`docs/agentic-systems.md`](docs/agentic-systems.md) | Agents die via n8n met elkaar communiceren: architectuur, stappenplan, Fase 1 |
 | [`IDEEEN.md`](IDEEEN.md) | Uitbreidingsideeën: agentic system, MCP, RAG, en meer |
 
 ---
