@@ -18,18 +18,97 @@
     },
     {
       "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": { "__rl": true, "mode": "name", "value": "agentic-blackboard" },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "conversation_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.conversation_id }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [460, 300],
+      "id": "7a5b5c5d-3006-4000-8000-300000000006",
+      "name": "Haal taak en antwoord op"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cp1",
+              "name": "prompt",
+              "value": "={{ 'Taak: ' + $json.task + '\\n\\nAntwoord van de Worker:\\n' + $json.worker_antwoord + '\\n\\nBeoordeel dit antwoord. Reageer ALLEEN met \"PASS\" als het klopt en volledig is, of met \"FAIL: <korte reden>\" als het niet klopt of onvolledig is.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300],
+      "id": "7a6b6c6d-3007-4000-8000-300000000007",
+      "name": "Bouw beoordelingsprompt"
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "http://host.docker.internal:11434/api/generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { \"model\": \"llama3.1:8b\", \"prompt\": $json.body.content, \"stream\": false } }}",
+        "jsonBody": "={{ { \"model\": \"llama3.1:8b\", \"prompt\": $json.prompt, \"stream\": false } }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [460, 300],
+      "position": [900, 300],
       "id": "7a2b2c2d-3003-4000-8000-300000000003",
       "name": "Vraag Ollama om oordeel"
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": { "__rl": true, "mode": "name", "value": "agentic-blackboard" },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "conversation_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Ontvang beoordelingsverzoek').item.json.body.conversation_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "kritiek": "={{ $json.response }}",
+            "status": "beoordeeld"
+          },
+          "schema": [
+            { "id": "kritiek", "displayName": "kritiek", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "status", "displayName": "status", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [1120, 300],
+      "id": "7a7b7c7d-3008-4000-8000-300000000008",
+      "name": "Sla oordeel op"
     },
     {
       "parameters": {
@@ -62,13 +141,13 @@
             {
               "id": "c5",
               "name": "performative",
-              "value": "={{ $json.response.trim().toUpperCase().startsWith('PASS') ? 'inform' : 'critique' }}",
+              "value": "={{ $('Vraag Ollama om oordeel').item.json.response.trim().toUpperCase().startsWith('PASS') ? 'inform' : 'critique' }}",
               "type": "string"
             },
             {
               "id": "c6",
               "name": "content",
-              "value": "={{ $json.response }}",
+              "value": "={{ $json.kritiek }}",
               "type": "string"
             },
             {
@@ -89,7 +168,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [680, 300],
+      "position": [1340, 300],
       "id": "7a3b3c3d-3004-4000-8000-300000000004",
       "name": "Bouw oordeel-bericht"
     },
@@ -101,16 +180,25 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [900, 300],
+      "position": [1560, 300],
       "id": "7a4b4c4d-3005-4000-8000-300000000005",
       "name": "Antwoord aan Coordinator"
     }
   ],
   "connections": {
     "Ontvang beoordelingsverzoek": {
+      "main": [[{ "node": "Haal taak en antwoord op", "type": "main", "index": 0 }]]
+    },
+    "Haal taak en antwoord op": {
+      "main": [[{ "node": "Bouw beoordelingsprompt", "type": "main", "index": 0 }]]
+    },
+    "Bouw beoordelingsprompt": {
       "main": [[{ "node": "Vraag Ollama om oordeel", "type": "main", "index": 0 }]]
     },
     "Vraag Ollama om oordeel": {
+      "main": [[{ "node": "Sla oordeel op", "type": "main", "index": 0 }]]
+    },
+    "Sla oordeel op": {
       "main": [[{ "node": "Bouw oordeel-bericht", "type": "main", "index": 0 }]]
     },
     "Bouw oordeel-bericht": {

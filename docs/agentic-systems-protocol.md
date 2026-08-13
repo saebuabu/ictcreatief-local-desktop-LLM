@@ -41,10 +41,19 @@ extra `meta`-velden, gezet nadat de Critic heeft geoordeeld:
 - `meta.kritiek` (string, alleen aanwezig als `herzien: true`) — de reden die de
   Critic gaf voor de afkeuring, ter referentie.
 
+## Fase 3-toevoeging: `content` is optioneel bij `request`/`revise`
+
+Vanaf Fase 3 hoeft een `request`- of `revise`-bericht geen `content` meer te bevatten —
+de ontvanger haalt de taak, het vorige antwoord en de kritiek zelf op uit de
+`agentic-blackboard`-Data Table op basis van `conversation_id` (zie
+[`agentic-systems.md`](agentic-systems.md#fase-3--het-blackboard) voor het tabelontwerp).
+Bij `inform`/`critique`-berichten blijft `content` wel gevuld — dat is de eigen output
+van die stap (het antwoord, het oordeel), geen doorgestuurde geschiedenis.
+
 ## Afspraken
 
 - `conversation_id` wordt één keer per taak aangemaakt en door elke stap heen
-  meegegeven — dit is de sleutel voor het blackboard in Fase 3.
+  meegegeven — dit is de sleutel voor het blackboard (Fase 3).
 - Een agent gaat er nooit vanuit wie er verder nog meedoet in het gesprek; hij weet
   alleen van wie hij een bericht kreeg en waar het antwoord heen moet (`to`-veld, of een
   expliciete `reply_to` zodra driehoeksverkeer nodig is).

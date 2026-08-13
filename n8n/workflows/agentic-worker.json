@@ -18,18 +18,101 @@
     },
     {
       "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": { "__rl": true, "mode": "name", "value": "agentic-blackboard" },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "conversation_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.conversation_id }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [460, 300],
+      "id": "8a5b5c5d-1006-4000-8000-100000000006",
+      "name": "Haal taak op"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "p1",
+              "name": "prompt",
+              "value": "={{ $('Ontvang bericht').item.json.body.performative === 'revise' ? ('Oorspronkelijke taak: ' + $json.task + '\\n\\nJouw vorige antwoord: ' + $json.worker_antwoord + '\\n\\nKritiek van de Criticus: ' + $json.kritiek + '\\n\\nHerzie je antwoord op basis van deze kritiek.') : $json.task }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300],
+      "id": "8a6b6c6d-1007-4000-8000-100000000007",
+      "name": "Bouw prompt"
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "http://host.docker.internal:11434/api/generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { \"model\": \"llama3.1:8b\", \"prompt\": $json.body.content, \"stream\": false } }}",
+        "jsonBody": "={{ { \"model\": \"llama3.1:8b\", \"prompt\": $json.prompt, \"stream\": false } }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [460, 300],
+      "position": [900, 300],
       "id": "8a2b2c2d-1003-4000-8000-100000000003",
       "name": "Vraag Ollama"
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": { "__rl": true, "mode": "name", "value": "agentic-blackboard" },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "conversation_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Ontvang bericht').item.json.body.conversation_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "conversation_id": "={{ $('Ontvang bericht').item.json.body.conversation_id }}",
+            "worker_antwoord": "={{ $json.response }}",
+            "herzien": "={{ $('Ontvang bericht').item.json.body.performative === 'revise' }}",
+            "status": "={{ $('Ontvang bericht').item.json.body.performative === 'revise' ? 'herzien_wacht_op_critic' : 'wacht_op_critic' }}"
+          },
+          "schema": [
+            { "id": "conversation_id", "displayName": "conversation_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "worker_antwoord", "displayName": "worker_antwoord", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "herzien", "displayName": "herzien", "required": false, "defaultMatch": false, "display": true, "type": "boolean", "canBeUsedToMatch": true },
+            { "id": "status", "displayName": "status", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [1120, 300],
+      "id": "8a7b7c7d-1008-4000-8000-100000000008",
+      "name": "Sla antwoord op"
     },
     {
       "parameters": {
@@ -68,7 +151,7 @@
             {
               "id": "b6",
               "name": "content",
-              "value": "={{ $json.response }}",
+              "value": "={{ $json.worker_antwoord }}",
               "type": "string"
             },
             {
@@ -89,7 +172,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [680, 300],
+      "position": [1340, 300],
       "id": "8a3b3c3d-1004-4000-8000-100000000004",
       "name": "Bouw inform-bericht"
     },
@@ -101,16 +184,25 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [900, 300],
+      "position": [1560, 300],
       "id": "8a4b4c4d-1005-4000-8000-100000000005",
       "name": "Antwoord aan Coordinator"
     }
   ],
   "connections": {
     "Ontvang bericht": {
+      "main": [[{ "node": "Haal taak op", "type": "main", "index": 0 }]]
+    },
+    "Haal taak op": {
+      "main": [[{ "node": "Bouw prompt", "type": "main", "index": 0 }]]
+    },
+    "Bouw prompt": {
       "main": [[{ "node": "Vraag Ollama", "type": "main", "index": 0 }]]
     },
     "Vraag Ollama": {
+      "main": [[{ "node": "Sla antwoord op", "type": "main", "index": 0 }]]
+    },
+    "Sla antwoord op": {
       "main": [[{ "node": "Bouw inform-bericht", "type": "main", "index": 0 }]]
     },
     "Bouw inform-bericht": {

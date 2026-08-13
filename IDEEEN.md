@@ -25,7 +25,11 @@ in plaats van een apart framework: elke agent is een n8n-workflow met een webhoo
 agents roepen elkaars webhook aan met een gedeeld JSON-berichtprotocol. Fase 1
 (Coordinator + Worker) is getest. Fase 2 (Critic-agent + dynamische routering: de
 Coordinator stuurt een afgekeurd antwoord één keer terug voor herziening) is getest —
-zowel het direct-goedgekeurd-pad als de herzieningsroute zijn bevestigd werkend. Workflows:
+zowel het direct-goedgekeurd-pad als de herzieningsroute zijn bevestigd werkend. Fase 3
+(gedeelde blackboard — een n8n Data Table `agentic-blackboard` waarop agents taak,
+antwoord en kritiek op `conversation_id` lezen/schrijven in plaats van de volledige
+geschiedenis rond te sturen) is gebouwd, nog te testen — vereist wel dat de
+`agentic-blackboard`-tabel eerst handmatig in n8n wordt aangemaakt. Workflows:
 `n8n/workflows/agentic-coordinator.json`, `agentic-worker.json`, `agentic-critic.json`.
 Zie [`docs/agentic-systems.md`](docs/agentic-systems.md) voor de architectuur en het
 stappenplan.

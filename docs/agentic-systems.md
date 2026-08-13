@@ -32,11 +32,11 @@ HTTP Request-node: naar Ollama (`/api/generate`, zoals in
 zoals `llama3.1:8b`. Agents die de echte synthese doen → een sterker model. Dit is per
 agent instelbaar, geen architectuurkeuze.
 
-**4. Gedeeld geheugen & tools (latere fases).** Een blackboard (bijv. een simpele
-SQLite-tabel of n8n Data Table) waar agents gedeelde context lezen/schrijven in plaats
-van de volledige geschiedenis in elk bericht mee te sturen, plus tool-agents
+**4. Gedeeld geheugen & tools.** Een blackboard — sinds Fase 3 de n8n **Data table**
+`agentic-blackboard` — waar agents gedeelde context lezen/schrijven op `conversation_id`
+in plaats van de volledige geschiedenis in elk bericht mee te sturen. Tool-agents
 (websearch, rekenmachine) die via hetzelfde protocol aangeroepen worden
-(`performative: "tool-call"`).
+(`performative: "tool-call"`) volgen in Fase 4.
 
 ---
 
@@ -53,8 +53,9 @@ fase is een werkend, testbaar geheel:
   (één keer terug naar Worker als de Critic afkeurt) → Coordinator. Introduceert
   *dynamische* routering: de Coordinator bepaalt de volgende stap op basis van de
   inhoud van een bericht (`performative`), niet op basis van een vaste pijplijn.
-- **Fase 3.** Het blackboard erbij. Agents sturen niet meer de volledige geschiedenis
-  mee, maar lezen/schrijven een gedeelde opslag op `conversation_id`.
+- **Fase 3 (✅ deze levering).** Het blackboard erbij. Agents sturen niet meer de
+  volledige geschiedenis mee, maar lezen/schrijven een gedeelde opslag op
+  `conversation_id`.
 - **Fase 4.** Een tool-gebruikende agent (bijv. websearch) die andere agents via
   hetzelfde protocol werk kunnen laten doen.
 - **Fase 5.** Een concreet lesscenario bovenop de volledige stack — bijvoorbeeld een
@@ -84,11 +85,12 @@ De Ollama-URL (`http://host.docker.internal:11434`) en poort 5678 voor n8n zijn 
 correct ingesteld in dit project — zie [`n8n-setup.md`](n8n-setup.md). Geen wijzigingen
 nodig aan `docker-compose.yml` of `.env`.
 
-**Bewuste beperking:** dit is één begrensde herzieningsronde, geen echte lus. Blijft de
-Critic ook de tweede keer afkeuren, dan krijg je toch het herziene antwoord terug (niet
-opnieuw beoordeeld) — anders zou je een echte cyclus in de n8n-graaf nodig hebben, wat
-zonder een gedeeld geheugen (Fase 3) al snel foutgevoelig wordt. Een echte
-herhaal-tot-goedgekeurd-lus is een logische vervolgstap zodra Fase 3 er is.
+**Bewuste beperking:** dit is nog steeds één begrensde herzieningsronde, geen echte lus.
+Blijft de Critic ook de tweede keer afkeuren, dan krijg je toch het herziene antwoord
+terug (niet opnieuw beoordeeld). Het blackboard uit Fase 3 (hieronder) maakt een echte
+cyclus in de n8n-graaf haalbaar zonder de fragiele `$('NodeName')`-verwijzingen die dat
+eerder lastig maakten — maar die herhaal-tot-goedgekeurd-lus is zelf nog niet gebouwd,
+dat is een logische vervolgstap.
 
 ### Importeren
 
@@ -131,7 +133,8 @@ Verwacht resultaat: een JSON-envelope met `"from": "coordinator"`,
 `"performative": "inform"`, het (eventueel herziene) antwoord in `"content"`, en
 `"meta": { "herzien": true of false, ... }`. Bekijk de **Executions-tab** van de
 Coordinator-workflow om te zien of de Critic goedkeurde (rechtstreeks pad) of afkeurde
-(pad via "Bouw revise-verzoek" → Worker → "Bouw eindantwoord (herzien)").
+(pad via "Bouw revise-verzoek" → Worker (herziening) → "Haal eindresultaat op" →
+"Bouw eindantwoord" — zie Fase 3 hieronder voor deze nodes).
 
 Wil je de herzieningsroute bewust triggeren om te zien dat die werkt? Geef een taak op
 die een lokaal model waarschijnlijk half goed doet, bijvoorbeeld een rekensom met een
@@ -157,9 +160,130 @@ niet minder").
 
 ---
 
+## Fase 3 — het blackboard
+
+De Coordinator bouwde tot en met Fase 2 bij elke stap een steeds groter tekstblok (taak
++ antwoord + instructie) en gebruikte aan het eind `$('Roep Worker aan').item.json.content`
+en `$('Roep Criticus aan').item.json.content` — cross-node verwijzingen die precies de
+bron waren van de eerdere `\n`-escaping bug. Fase 3 vervangt dat door n8n's ingebouwde
+**Data table**-node als gedeelde blackboard: agents lezen en schrijven status op
+`conversation_id` in plaats van elkaar telkens de volledige context door te geven.
+
+### Tabelontwerp
+
+Eén Data Table, naam **`agentic-blackboard`**, met deze kolommen:
+
+| kolom | type | betekenis |
+|---|---|---|
+| `conversation_id` | string | matchsleutel, één rij per taak |
+| `task` | string | de oorspronkelijke taak |
+| `worker_antwoord` | string | laatste antwoord van de Worker (overschreven bij herziening) |
+| `kritiek` | string | laatste oordeel/reden van de Critic |
+| `status` | string | voortgangsindicator (`wacht_op_worker`, `wacht_op_critic`, `herzien_wacht_op_critic`, `beoordeeld`) |
+| `herzien` | boolean | `true` zodra de Worker een herziene versie heeft geschreven |
+
+`id`, `createdAt` en `updatedAt` zijn systeemkolommen van de Data Table zelf — niet los
+aanmaken.
+
+### Verplichte handmatige stap: de tabel aanmaken
+
+Een Data Table is geen workflow-entiteit en kan dus niet via JSON-import aangemaakt
+worden (er is ook geen `n8n`-CLI-commando voor). **Maak de tabel daarom eerst zelf aan**,
+vóór je de workflows hieronder (opnieuw) importeert:
+
+**Data tables** (linkermenu in de n8n-UI) → nieuwe tabel → naam `agentic-blackboard` →
+voeg de vijf kolommen uit de tabel hierboven toe (`conversation_id`, `task`,
+`worker_antwoord`, `kritiek`, `status` als tekst, `herzien` als boolean).
+
+De workflows verwijzen naar de tabel **op naam** (niet op interne ID), dus de exacte
+volgorde/ID van de kolommen maakt niet uit en de JSON-imports blijven daarmee net zo
+herhaalbaar als voorheen.
+
+### Wat er per workflow is veranderd
+
+- **`agentic-worker.json`** — niet langer afhankelijk van een kant-en-klare prompt in
+  het inkomende bericht. Nieuwe nodes: **"Haal taak op"** (leest de rij op
+  `conversation_id`), **"Bouw prompt"** (stelt de Ollama-prompt samen — taak alleen, of
+  taak + vorig antwoord + kritiek als `performative == "revise"`), en **"Sla antwoord
+  op"** (schrijft `worker_antwoord`/`herzien`/`status` terug).
+- **`agentic-critic.json`** — nieuwe nodes: **"Haal taak en antwoord op"** en **"Bouw
+  beoordelingsprompt"** (dezelfde PASS/FAIL-prompt als voorheen, nu opgebouwd uit de
+  blackboard-rij in plaats van uit het inkomende bericht), en **"Sla oordeel op"**
+  (schrijft `kritiek` en `status`).
+- **`agentic-coordinator.json`** — de grootste wijziging:
+  - **"Sla taak op"** (nieuw) schrijft de taak naar de blackboard vóór de Worker wordt
+    aangeroepen.
+  - **"Bouw review-verzoek"** en **"Bouw revise-verzoek"** zijn sterk vereenvoudigd:
+    geen tekstconcatenatie en geen `$('Ontvang taak')`/`$('Roep Worker aan')`-
+    verwijzingen meer, alleen nog een minimale envelope (`conversation_id`, `from`,
+    `to`, `performative`). De ontvanger haalt zelf op wat hij nodig heeft.
+  - **"Haal eindresultaat op"** (nieuw) haalt, ná zowel het direct-goedgekeurd-pad als
+    het herzieningspad, de definitieve rij op.
+  - De twee losse **"Bouw eindantwoord (herzien)"**/**"Bouw eindantwoord (direct
+    goedgekeurd)"**-nodes zijn samengevoegd tot één **"Bouw eindantwoord"**-node — dat
+    kan omdat de blackboard-rij zelf al aangeeft welk pad gevolgd is (`herzien`-kolom),
+    dus is er geen aparte node per tak meer nodig.
+
+Het externe contract verandert niet: dezelfde `POST /webhook/coordinator` met
+`{"task": "..."}`, hetzelfde antwoordformat met `meta.herzien`/`meta.kritiek`.
+
+### Importeren
+
+Zelfde volgorde als voorheen (worker → critic → coordinator), **nadat** de
+`agentic-blackboard`-tabel bestaat. Via de UI: **Workflows → Import from File** per
+bestand, opnieuw importeren overschrijft de bestaande workflow (zelfde `id`). Via de
+CLI:
+
+```bash
+docker cp n8n/workflows/agentic-worker.json n8n:/tmp/agentic-worker.json
+docker exec n8n n8n import:workflow --input=/tmp/agentic-worker.json
+docker exec n8n n8n publish:workflow --id=w0rkerAgent01
+
+docker cp n8n/workflows/agentic-critic.json n8n:/tmp/agentic-critic.json
+docker exec n8n n8n import:workflow --input=/tmp/agentic-critic.json
+docker exec n8n n8n publish:workflow --id=criticAgent01
+
+docker cp n8n/workflows/agentic-coordinator.json n8n:/tmp/agentic-coordinator.json
+docker exec n8n n8n import:workflow --input=/tmp/agentic-coordinator.json
+docker exec n8n n8n publish:workflow --id=c00rdinatorAgent01
+
+docker restart n8n
+```
+
+### Testen
+
+Zelfde testcommando als Fase 1/2:
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:5678/webhook/coordinator -Method Post `
+  -ContentType "application/json" `
+  -Body '{"task": "Leg in één alinea het verschil uit tussen een proces en een thread."}'
+```
+
+Controleer dit keer ook:
+
+- **n8n → Data tables → `agentic-blackboard`**: er verschijnt/wijzigt een rij voor de
+  gebruikte `conversation_id`, met `task`, `worker_antwoord`, `status` en (bij
+  herziening) `kritiek` + `herzien: true` ingevuld.
+- **Executions-tab** van elke workflow: de nieuwe Data table-nodes moeten daadwerkelijk
+  een rij vinden/schrijven — een lege `Get`-uitkomst betekent meestal dat de Coordinator
+  de rij nog niet had aangemaakt, of dat de tabelnaam niet exact `agentic-blackboard` is.
+
+### Problemen oplossen
+
+- **"Data table with name 'agentic-blackboard' not found"** → de tabel is nog niet
+  aangemaakt, of de naam wijkt af (hoofdlettergevoeligheid maakt niet uit, spelling wel).
+- **Lege `Get`-resultaten bij Worker/Critic** → de Coordinator's "Sla taak op" is niet
+  (goed) uitgevoerd vóór de Worker werd aangeroepen; check de Executions-tab van de
+  Coordinator op die node.
+- Voor de overige problemen (Ollama-aanroep faalt, Switch-node importeert niet goed,
+  Critic-prompt te letterlijk) gelden dezelfde tips als bij Fase 1/2 hierboven.
+
+---
+
 ## Volgende stap
 
-Fase 3: het blackboard. Agents sturen niet meer de volledige geschiedenis rond via
-`$('NodeName')`-verwijzingen binnen één n8n-executie, maar lezen/schrijven gedeelde
-status op `conversation_id`. Dat maakt ook een échte herhaal-lus (in plaats van de ene
-begrensde herzieningsronde uit Fase 2) haalbaar.
+Fase 4: een tool-gebruikende agent (bijv. websearch) die andere agents via hetzelfde
+protocol werk kunnen laten doen (`performative: "tool-call"`/`"tool-result"`). Het
+blackboard uit Fase 3 is ook de basis voor een échte herhaal-tot-goedgekeurd-lus in
+plaats van de huidige ene begrensde herzieningsronde — dat is zelf nog niet gebouwd.
