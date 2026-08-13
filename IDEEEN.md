@@ -24,8 +24,8 @@ en debuggen, of meerstaps onderzoek uitvoeren.
 in plaats van een apart framework: elke agent is een n8n-workflow met een webhook,
 agents roepen elkaars webhook aan met een gedeeld JSON-berichtprotocol. Fase 1
 (Coordinator + Worker) is getest. Fase 2 (Critic-agent + dynamische routering: de
-Coordinator stuurt een afgekeurd antwoord één keer terug voor herziening) staat klaar,
-nog te testen. Workflows:
+Coordinator stuurt een afgekeurd antwoord één keer terug voor herziening) is getest —
+zowel het direct-goedgekeurd-pad als de herzieningsroute zijn bevestigd werkend. Workflows:
 `n8n/workflows/agentic-coordinator.json`, `agentic-worker.json`, `agentic-critic.json`.
 Zie [`docs/agentic-systems.md`](docs/agentic-systems.md) voor de architectuur en het
 stappenplan.
