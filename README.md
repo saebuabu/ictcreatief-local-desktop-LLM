@@ -41,8 +41,20 @@ docker compose up -d
 ```
 
 Open daarna **http://localhost:3000** (Open WebUI) of **http://localhost:5678** (n8n) in je
-browser. Zie [`docs/n8n-setup.md`](docs/n8n-setup.md) voor de eerste-keer-setup van n8n en een
-voorbeeldworkflow die Ollama aanroept.
+browser. Bij het eerste bezoek aan n8n vraagt het om een eigen owner-account (naam, e-mail,
+wachtwoord) — er zijn geen vaste inloggegevens via `.env`.
+
+Test of n8n Ollama kan aanroepen met de voorbeeldworkflow (`n8n/workflows/samenvatten-webhook.json`):
+importeer die via **Workflows → Import from File** in de editor, activeer hem, en roep 'm aan:
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:5678/webhook/samenvatten -Method Post `
+  -ContentType "application/json" -Body '{"tekst": "lange tekst hier..."}'
+```
+
+Verwacht resultaat: een JSON-object met een `samenvatting`-veld. Zie
+[`docs/n8n-setup.md`](docs/n8n-setup.md) voor de volledige eerste-keer-setup, CLI-import en
+troubleshooting.
 
 ### 4. Stoppen
 
