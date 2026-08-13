@@ -124,7 +124,7 @@
             {
               "id": "d6",
               "name": "content",
-              "value": "={{ 'Taak: ' + $('Ontvang taak').item.json.body.task + '\n\nAntwoord van de Worker:\n' + $json.content + '\n\nBeoordeel dit antwoord. Reageer ALLEEN met \"PASS\" als het klopt en volledig is, of met \"FAIL: <korte reden>\" als het niet klopt of onvolledig is.' }}",
+              "value": "={{ 'Taak: ' + $('Ontvang taak').item.json.body.task + '\\n\\nAntwoord van de Worker:\\n' + $json.content + '\\n\\nBeoordeel dit antwoord. Reageer ALLEEN met \"PASS\" als het klopt en volledig is, of met \"FAIL: <korte reden>\" als het niet klopt of onvolledig is.' }}",
               "type": "string"
             },
             {
@@ -226,7 +226,7 @@
             {
               "id": "e6",
               "name": "content",
-              "value": "={{ 'Herzie je antwoord op basis van deze kritiek: ' + $json.content + '\n\nOorspronkelijke taak: ' + $('Ontvang taak').item.json.body.task + '\n\nJouw vorige antwoord: ' + $('Roep Worker aan').item.json.content }}",
+              "value": "={{ 'Herzie je antwoord op basis van deze kritiek: ' + $json.content + '\\n\\nOorspronkelijke taak: ' + $('Ontvang taak').item.json.body.task + '\\n\\nJouw vorige antwoord: ' + $('Roep Worker aan').item.json.content }}",
               "type": "string"
             },
             {
