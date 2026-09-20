@@ -1,2 +1,6 @@
 # PDF bestanden
 **/*.pdf
+
+# RAG brondocumenten (Fase 4) — lokale inhoud, niet in git
+rag-documents/*
+!rag-documents/.gitkeep

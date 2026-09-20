@@ -22,10 +22,22 @@ services:
     environment:
       - GENERIC_TIMEZONE=Europe/Amsterdam
       - TZ=Europe/Amsterdam
+      - N8N_RESTRICT_FILE_ACCESS_TO=/data/rag-documents
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./rag-documents:/data/rag-documents:ro
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
     restart: unless-stopped
 
 volumes:
   open-webui:
   n8n_data:
+  qdrant_data:

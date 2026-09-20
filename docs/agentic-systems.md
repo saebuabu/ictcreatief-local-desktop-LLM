@@ -34,9 +34,11 @@ agent instelbaar, geen architectuurkeuze.
 
 **4. Gedeeld geheugen & tools.** Een blackboard — sinds Fase 3 de n8n **Data table**
 `agentic-blackboard` — waar agents gedeelde context lezen/schrijven op `conversation_id`
-in plaats van de volledige geschiedenis in elk bericht mee te sturen. Tool-agents
-(websearch, rekenmachine) die via hetzelfde protocol aangeroepen worden
-(`performative: "tool-call"`) volgen in Fase 4.
+in plaats van de volledige geschiedenis in elk bericht mee te sturen. Tool-agents die via
+hetzelfde protocol aangeroepen worden (`performative: "tool-call"`) volgen in Fase 4 —
+bewust gekozen voor een **lokale kennisbank (RAG)** in plaats van bijvoorbeeld websearch,
+dat een externe verbinding zou vereisen en tegen het privacy-uitgangspunt van dit project
+ingaat.
 
 ---
 
@@ -56,8 +58,9 @@ fase is een werkend, testbaar geheel:
 - **Fase 3 (✅ deze levering).** Het blackboard erbij. Agents sturen niet meer de
   volledige geschiedenis mee, maar lezen/schrijven een gedeelde opslag op
   `conversation_id`.
-- **Fase 4.** Een tool-gebruikende agent (bijv. websearch) die andere agents via
-  hetzelfde protocol werk kunnen laten doen.
+- **Fase 4 (🚧 deze levering: ingestion-workflow).** Een tool-gebruikende agent — een
+  lokale kennisbank (RAG). De ingestion-workflow (documenten → doorzoekbare
+  kennisbank) staat er; de query-tool-agent en de koppeling aan de Worker volgen nog.
 - **Fase 5.** Een concreet lesscenario bovenop de volledige stack — bijvoorbeeld een
   "Begrippen-uitlegger": jij geeft een onderwerp, een Onderzoeker verzamelt materiaal,
   een Uitlegger stelt een les op, een Criticus checkt die, en herhaalt tot die goedgekeurd
@@ -281,9 +284,118 @@ Controleer dit keer ook:
 
 ---
 
+## Fase 4 — lokale kennisbank (RAG): ingestion-workflow
+
+Fase 4 voegt een tool-gebruikende agent toe. In plaats van het voor de hand liggende
+voorbeeld (websearch — vereist een externe verbinding, botst met het privacy-uitgangspunt
+van dit project) is gekozen voor een **lokale kennisbank**: documenten worden lokaal
+geïndexeerd in een vector-database, zodat een agent er straks relevante stukken uit kan
+opzoeken voor de Worker (`performative: "tool-call"`/`"tool-result"`, zie
+[`agentic-systems-protocol.md`](agentic-systems-protocol.md)).
+
+Deze levering bevat alleen de **ingestion-workflow** (documenten → doorzoekbare
+kennisbank) — zelfstandig testbare eerste bouwsteen, net zoals Worker/Critic/Coordinator
+in Fase 1-3 ook eerst apart gebouwd zijn. De **query-tool-agent** en het koppelen aan de
+Worker zijn latere, losse stappen.
+
+### Ontwerp
+
+n8n heeft ingebouwde **LangChain-nodes** voor dit doel — geen losse handgeschreven
+HTTP-aanroepen naar Ollama's embeddings-endpoint of Qdrant's REST-API nodig (en dus niet
+hetzelfde risico als de eerdere `\n`-escaping bug). `n8n/workflows/rag-ingest.json`:
+
+1. **Handmatige start** (Manual Trigger) — ingestion is een bewuste actie ("ik heb
+   documenten toegevoegd/gewijzigd"), geen doorlopend proces.
+2. **Lees documenten** (Read/Write Files from Disk) — leest alles onder
+   `/data/rag-documents/**/*` als losse items met binaire bestandsdata.
+3. **Qdrant Vector Store** (mode: Insert) — ontvangt de bestanden-items rechtstreeks,
+   gevoed door twee AI-subnodes (n8n's aparte AI-verbindingstypes, niet de gewone
+   pijlen):
+   - **Embeddings Ollama** (model `nomic-embed-text`)
+   - **Default Data Loader** (`dataType: binary`, `loader: auto`) — detecteert het
+     bestandstype op mime-type en ondersteunt zo **markdown/tekst, PDF, Docx (Word) en
+     CSV native**, inclusief Word via een ingebouwde `mammoth`-afhankelijkheid — dus
+     géén handmatige Word→PDF-omzetting nodig. **Excel (.xlsx) wordt niet automatisch
+     herkend**; exporteer Excel-bestanden als CSV voordat je ze in `rag-documents/`
+     zet. Deze loader heeft zelf weer een vereiste subnode:
+     - **Recursive Character Text Splitter** (chunkSize 500, chunkOverlap 50)
+
+De Qdrant-collectie (`mbo-kennisbank`) hoeft **niet** vooraf aangemaakt te worden —
+anders dan bij de Fase 3 Data Table maakt LangChain's Qdrant-integratie de collectie zelf
+aan bij de eerste keer schrijven.
+
+### Nieuwe onderdelen in dit project
+
+- **Qdrant** — nieuwe service in `docker-compose.yml`, poort `QDRANT_PORT` (standaard
+  `6333`). Dashboard: `http://localhost:6333/dashboard`.
+- **`rag-documents/`** — nieuwe map in de repo-root, **read-only** gemount in de
+  n8n-container op `/data/rag-documents`. Bevat je brondocumenten; staat in
+  `.gitignore` (alleen een `.gitkeep` wordt bijgehouden) zodat er geen cursusmateriaal
+  in git terechtkomt.
+- **`ollama pull nomic-embed-text`** (~275 MB, eenmalig) — het embedding-model.
+
+### Verplichte handmatige stappen
+
+1. `docker compose up -d` opnieuw draaien zodat Qdrant en de nieuwe volume-mount actief
+   worden.
+2. `ollama pull nomic-embed-text`.
+3. Twee **credentials** aanmaken in n8n (Settings → Credentials → New) — dit kan niet
+   via JSON-import, credential-ID's zijn instance-specifiek:
+   - **Ollama**: base URL `http://host.docker.internal:11434`
+   - **Qdrant API**: URL `http://qdrant:6333` (via het interne Docker-netwerk — de
+     containers bereiken elkaar op servicenaam, net zoals n8n nu al
+     `host.docker.internal` gebruikt om de Windows-Ollama-service te bereiken)
+4. Na het importeren van de workflow: open de **Embeddings Ollama**- en **Qdrant Vector
+   Store**-node en selecteer de zojuist aangemaakte credential in de dropdown — dat veld
+   staat niet vooraf ingevuld in de JSON.
+5. Documenten in `rag-documents/` zetten (md/txt/pdf/docx/csv).
+
+### Importeren
+
+Via de UI: **Workflows → Import from File** → `n8n/workflows/rag-ingest.json` → zet 'm in
+de **RAG**-map. Via de CLI:
+
+```bash
+docker cp n8n/workflows/rag-ingest.json n8n:/tmp/rag-ingest.json
+docker exec n8n n8n import:workflow --input=/tmp/rag-ingest.json
+docker restart n8n
+```
+
+Deze workflow hoeft niet gepubliceerd/actief gezet te worden (geen webhook) — je voert
+'m handmatig uit via de **Execute workflow**-knop in de editor.
+
+### Testen
+
+Klik **Execute workflow** in de n8n-editor. Controleer:
+
+- **Qdrant-dashboard** (`http://localhost:6333/dashboard`) toont de collectie
+  `mbo-kennisbank` met punten (chunks) erin.
+- **Executions-tab** van `rag-ingest` toont per node wat er verwerkt is — bij de Qdrant
+  Vector Store-node zie je hoeveel documenten/chunks zijn ingevoegd.
+- Test met minstens één bestand per ondersteund type (md, pdf, docx, csv) om de
+  auto-detectie te bevestigen.
+
+### Problemen oplossen
+
+- **Node toont "credentials not set"** → stap 4 hierboven, credential nog niet
+  geselecteerd in de node zelf.
+- **Lege/mislukte run bij "Lees documenten"** → controleer of `rag-documents/` bestanden
+  bevat en of de volume-mount in `docker-compose.yml` actief is (`docker compose up -d`
+  opnieuw draaien na het toevoegen van de mount).
+- **Qdrant-credential-test faalt** → gebruik `http://qdrant:6333`, niet
+  `http://localhost:6333` — vanuit de n8n-container verwijst `localhost` naar zichzelf,
+  niet naar de Qdrant-container (zelfde reden als bij de Ollama-URL in
+  [`n8n-setup.md`](n8n-setup.md)).
+- **Excel-bestand wordt niet meegenomen** → verwacht gedrag, exporteer als CSV (zie
+  Ontwerp hierboven).
+
+---
+
 ## Volgende stap
 
-Fase 4: een tool-gebruikende agent (bijv. websearch) die andere agents via hetzelfde
-protocol werk kunnen laten doen (`performative: "tool-call"`/`"tool-result"`). Het
-blackboard uit Fase 3 is ook de basis voor een échte herhaal-tot-goedgekeurd-lus in
-plaats van de huidige ene begrensde herzieningsronde — dat is zelf nog niet gebouwd.
+Binnen Fase 4: de **query-tool-agent** (vraag → embedden → top-k relevante chunks uit
+Qdrant → teruggeven, `performative: tool-result`) en het **koppelen aan de Worker**
+(Worker beslist zelf of hij de kennisbank raadpleegt) — beide pas nadat de
+ingestion-workflow end-to-end getest is. Het blackboard uit Fase 3 is verder ook de basis
+voor een échte herhaal-tot-goedgekeurd-lus in plaats van de huidige ene begrensde
+herzieningsronde — dat staat nog los op de planning.
