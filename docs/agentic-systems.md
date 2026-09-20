@@ -58,9 +58,10 @@ fase is een werkend, testbaar geheel:
 - **Fase 3 (✅ deze levering).** Het blackboard erbij. Agents sturen niet meer de
   volledige geschiedenis mee, maar lezen/schrijven een gedeelde opslag op
   `conversation_id`.
-- **Fase 4 (🚧 deze levering: ingestion-workflow).** Een tool-gebruikende agent — een
-  lokale kennisbank (RAG). De ingestion-workflow (documenten → doorzoekbare
-  kennisbank) staat er; de query-tool-agent en de koppeling aan de Worker volgen nog.
+- **Fase 4 (✅ ingestion + query getest).** Een tool-gebruikende agent — een lokale
+  kennisbank (RAG). Zowel de ingestion-workflow (documenten → doorzoekbare kennisbank)
+  als de query-tool-agent (vraag → relevante fragmenten) zijn gebouwd en getest; de
+  koppeling aan de Worker volgt nog.
 - **Fase 5.** Een concreet lesscenario bovenop de volledige stack — bijvoorbeeld een
   "Begrippen-uitlegger": jij geeft een onderwerp, een Onderzoeker verzamelt materiaal,
   een Uitlegger stelt een les op, een Criticus checkt die, en herhaalt tot die goedgekeurd
@@ -284,21 +285,26 @@ Controleer dit keer ook:
 
 ---
 
-## Fase 4 — lokale kennisbank (RAG): ingestion-workflow
+## Fase 4 — lokale kennisbank (RAG)
 
 Fase 4 voegt een tool-gebruikende agent toe. In plaats van het voor de hand liggende
 voorbeeld (websearch — vereist een externe verbinding, botst met het privacy-uitgangspunt
 van dit project) is gekozen voor een **lokale kennisbank**: documenten worden lokaal
-geïndexeerd in een vector-database, zodat een agent er straks relevante stukken uit kan
-opzoeken voor de Worker (`performative: "tool-call"`/`"tool-result"`, zie
+geïndexeerd in een vector-database, zodat een agent er relevante stukken uit kan opzoeken
+voor de Worker (`performative: "tool-call"`/`"tool-result"`, zie
 [`agentic-systems-protocol.md`](agentic-systems-protocol.md)).
 
-Deze levering bevat alleen de **ingestion-workflow** (documenten → doorzoekbare
-kennisbank) — zelfstandig testbare eerste bouwsteen, net zoals Worker/Critic/Coordinator
-in Fase 1-3 ook eerst apart gebouwd zijn. De **query-tool-agent** en het koppelen aan de
-Worker zijn latere, losse stappen.
+Gebouwd en getest in twee zelfstandig testbare bouwstenen, net zoals Worker/Critic/
+Coordinator in Fase 1-3 ook eerst apart gebouwd zijn:
 
-### Ontwerp
+1. **Ingestion-workflow** (`rag-ingest.json`) — documenten → doorzoekbare kennisbank.
+2. **Query-tool-agent** (`rag-query.json`) — vraag → relevante fragmenten uit de
+   kennisbank.
+
+Het **koppelen aan de Worker** (Worker beslist zelf of hij de kennisbank raadpleegt) is
+een latere, losse stap.
+
+### Ingestion-workflow: ontwerp
 
 n8n heeft ingebouwde **LangChain-nodes** voor dit doel — geen losse handgeschreven
 HTTP-aanroepen naar Ollama's embeddings-endpoint of Qdrant's REST-API nodig (en dus niet
@@ -333,8 +339,13 @@ aan bij de eerste keer schrijven.
   `.gitignore` (alleen een `.gitkeep` wordt bijgehouden) zodat er geen cursusmateriaal
   in git terechtkomt.
 - **`ollama pull nomic-embed-text`** (~275 MB, eenmalig) — het embedding-model.
+- **`N8N_RESTRICT_FILE_ACCESS_TO=/data/rag-documents`** — environment-variabele op de
+  `n8n`-service in `docker-compose.yml`. Recente n8n-versies beperken de "Read/Write
+  Files from Disk"-node standaard tot `/home/node/.n8n-files`; zonder deze variabele
+  geeft de ingestion-workflow "Access to the file is not allowed" bij het lezen van
+  `/data/rag-documents`.
 
-### Verplichte handmatige stappen
+### Ingestion-workflow: verplichte handmatige stappen
 
 1. `docker compose up -d` opnieuw draaien zodat Qdrant en de nieuwe volume-mount actief
    worden.
@@ -350,10 +361,10 @@ aan bij de eerste keer schrijven.
    staat niet vooraf ingevuld in de JSON.
 5. Documenten in `rag-documents/` zetten (md/txt/pdf/docx/csv).
 
-### Importeren
+### Ingestion-workflow: importeren
 
 Via de UI: **Workflows → Import from File** → `n8n/workflows/rag-ingest.json` → zet 'm in
-de **RAG**-map. Via de CLI:
+de **RAG**-map (optioneel; direct in Personal importeren kan ook). Via de CLI:
 
 ```bash
 docker cp n8n/workflows/rag-ingest.json n8n:/tmp/rag-ingest.json
@@ -364,7 +375,7 @@ docker restart n8n
 Deze workflow hoeft niet gepubliceerd/actief gezet te worden (geen webhook) — je voert
 'm handmatig uit via de **Execute workflow**-knop in de editor.
 
-### Testen
+### Ingestion-workflow: testen (✅ bevestigd werkend)
 
 Klik **Execute workflow** in de n8n-editor. Controleer:
 
@@ -375,8 +386,16 @@ Klik **Execute workflow** in de n8n-editor. Controleer:
 - Test met minstens één bestand per ondersteund type (md, pdf, docx, csv) om de
   auto-detectie te bevestigen.
 
-### Problemen oplossen
+Bevestigd met een testdocument (`rag-documents/test-mbo-kennisbank.md`, niet in git):
+`http://localhost:6333/collections/mbo-kennisbank` toonde `points_count: 2` na een
+Execute-run.
 
+### Ingestion-workflow: problemen oplossen
+
+- **"Access to the file is not allowed. Allowed paths: /home/node/.n8n-files"** bij de
+  node **Lees documenten** → `N8N_RESTRICT_FILE_ACCESS_TO=/data/rag-documents` ontbreekt
+  nog op de `n8n`-service; toevoegen aan `docker-compose.yml` en
+  `docker compose up -d n8n` opnieuw draaien (zie "Nieuwe onderdelen" hierboven).
 - **Node toont "credentials not set"** → stap 4 hierboven, credential nog niet
   geselecteerd in de node zelf.
 - **Lege/mislukte run bij "Lees documenten"** → controleer of `rag-documents/` bestanden
@@ -389,13 +408,52 @@ Klik **Execute workflow** in de n8n-editor. Controleer:
 - **Excel-bestand wordt niet meegenomen** → verwacht gedrag, exporteer als CSV (zie
   Ontwerp hierboven).
 
+### Query-tool-agent: ontwerp
+
+`n8n/workflows/rag-query.json` — een webhook-agent, net als Worker/Critic/Coordinator,
+die het protocol volgt (`performative: "tool-call"` in, `"tool-result"` uit):
+
+1. **Ontvang vraag** (Webhook, `POST /webhook/rag-query`) — verwacht
+   `{"conversation_id", "from", "content": "<vraag>"}`.
+2. **Zoek in kennisbank** (Qdrant Vector Store, mode `load`) — embedt de vraag via de
+   **Embeddings Ollama**-subnode (zelfde model, `nomic-embed-text`) en haalt de top-4
+   (`topK`) meest gelijkende fragmenten op uit `mbo-kennisbank`, elk met
+   `document.pageContent` + score.
+3. **Verzamel fragmenten** (Aggregate-node) — voegt de losse chunk-items samen tot één
+   lijst (`fragmenten`), zodat de volgende stap één bericht bouwt in plaats van één per
+   fragment.
+4. **Bouw tool-result bericht** — protocol-envelope: `from: "rag-query"`,
+   `to: <oorspronkelijke afzender>`, `performative: "tool-result"`, `content` = de
+   fragmenten samengevoegd (of een nette melding als er niks gevonden is),
+   `meta.aantal_fragmenten`.
+5. **Antwoord** (Respond to Webhook).
+
+In tegenstelling tot de ingestion-workflow moet deze workflow wél **actief/gepubliceerd**
+staan (heeft een webhook).
+
+### Query-tool-agent: importeren en testen (✅ bevestigd werkend)
+
+Via de UI: **Workflows → Import from File** → `n8n/workflows/rag-query.json` → open de
+node **Embeddings Ollama** en selecteer de bestaande Ollama-credential → **activeer** de
+workflow.
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:5678/webhook/rag-query -Method Post `
+  -ContentType "application/json" `
+  -Body '{"conversation_id": "test-1", "from": "tester", "content": "Wat moet een student dragen in de werkplaats?"}'
+```
+
+Verwacht: `performative: "tool-result"` met de relevante fragmenten uit de kennisbank in
+`content`. Bevestigd met het testdocument: de vraag over PBM in de werkplaats leverde
+zowel het PBM-fragment als (als tweede, minder relevante match) het BPV-fragment op —
+`aantal_fragmenten: 2`.
+
 ---
 
 ## Volgende stap
 
-Binnen Fase 4: de **query-tool-agent** (vraag → embedden → top-k relevante chunks uit
-Qdrant → teruggeven, `performative: tool-result`) en het **koppelen aan de Worker**
-(Worker beslist zelf of hij de kennisbank raadpleegt) — beide pas nadat de
-ingestion-workflow end-to-end getest is. Het blackboard uit Fase 3 is verder ook de basis
-voor een échte herhaal-tot-goedgekeurd-lus in plaats van de huidige ene begrensde
-herzieningsronde — dat staat nog los op de planning.
+Binnen Fase 4: het **koppelen aan de Worker** (Worker beslist zelf of hij de kennisbank
+raadpleegt via `rag-query`, `performative: tool-call`/`tool-result`) — nu de
+ingestion- en query-workflow allebei end-to-end getest zijn. Het blackboard uit Fase 3 is
+verder ook de basis voor een échte herhaal-tot-goedgekeurd-lus in plaats van de huidige
+ene begrensde herzieningsronde — dat staat nog los op de planning.

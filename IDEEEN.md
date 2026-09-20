@@ -31,11 +31,13 @@ antwoord en kritiek op `conversation_id` lezen/schrijven in plaats van de volled
 geschiedenis rond te sturen) is gebouwd, nog te testen — vereist wel dat de
 `agentic-blackboard`-tabel eerst handmatig in n8n wordt aangemaakt. Fase 4 (tool-agent —
 bewust een **lokale kennisbank (RAG)** in plaats van websearch, om geen externe
-verbinding nodig te hebben) is gestart: de ingestion-workflow
+verbinding nodig te hebben) heeft nu zowel de ingestion-workflow
 (`n8n/workflows/rag-ingest.json`, documenten → Qdrant-vectordatabase via Ollama-
-embeddings) is gebouwd, nog te testen. De query-tool-agent en de koppeling aan de Worker
-volgen later. Workflows: `n8n/workflows/agentic-coordinator.json`, `agentic-worker.json`,
-`agentic-critic.json`, `rag-ingest.json`.
+embeddings) als de query-tool-agent (`rag-query.json`, vraag → embedden → top-k
+fragmenten uit Qdrant → `tool-result`) gebouwd én getest. De koppeling aan de Worker
+(zodat de Worker zelf beslist de kennisbank te raadplegen) volgt later. Workflows:
+`n8n/workflows/agentic-coordinator.json`, `agentic-worker.json`, `agentic-critic.json`,
+`rag-ingest.json`, `rag-query.json`.
 Zie [`docs/agentic-systems.md`](docs/agentic-systems.md) voor de architectuur en het
 stappenplan.
 
@@ -73,10 +75,11 @@ schooldocumenten, handleidingen of interne kennisbanken.
 - Embedding model: `nomic-embed-text` via Ollama
 - Open WebUI heeft ingebouwde RAG-ondersteuning (documenten uploaden in de chat)
 
-**Status:** 🚧 in ontwikkeling, als Fase 4 tool-agent van punt 1 (Agentic System) —
-Qdrant + `nomic-embed-text` via Ollama, precies zoals hierboven beschreven. De
-ingestion-workflow staat er (`n8n/workflows/rag-ingest.json`), nog te testen. Zie
-[`docs/agentic-systems.md`](docs/agentic-systems.md#fase-4--lokale-kennisbank-rag-ingestion-workflow).
+**Status:** ✅ ingestion + query getest, als Fase 4 tool-agent van punt 1 (Agentic
+System) — Qdrant + `nomic-embed-text` via Ollama, precies zoals hierboven beschreven.
+Zowel de ingestion-workflow (`n8n/workflows/rag-ingest.json`) als de query-tool-agent
+(`rag-query.json`) werken end-to-end; koppeling aan de Worker volgt nog. Zie
+[`docs/agentic-systems.md`](docs/agentic-systems.md#fase-4--lokale-kennisbank-rag).
 
 ---
 
