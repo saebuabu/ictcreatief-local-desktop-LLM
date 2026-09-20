@@ -123,7 +123,52 @@ Zie [`docs/n8n-setup.md`](docs/n8n-setup.md) voor setup, eerste login en de voor
 
 ---
 
-## 6. OpenClaw als communicatie wrapper
+## 7. Open WebUI-agent die een n8n-workflow aanroept (tool-calling)
+
+**Wat is het?**
+Studenten krijgen in Open WebUI een specifieke, aan hen toegewezen chatbot (model +
+system prompt) tot hun beschikking. Via Open WebUI's **Tools**-functie (Workspace →
+Tools, Python-functies gekoppeld aan dat model) kan die chatbot tijdens het gesprek een
+n8n-webhook aanroepen en het resultaat terugkrijgen in de conversatie — zelfde
+synchrone webhook-patroon (`responseMode: responseNode`) als de agentic-systemen in
+punt 1, alleen nu aangeroepen vanuit Open WebUI in plaats van vanuit een andere
+n8n-workflow.
+
+**Waarom interessant?**
+Studenten hoeven niet te weten dat er n8n achter zit — ze chatten gewoon, en de agent
+besluit zelf (via tool-calling) wanneer hij bijvoorbeeld de RAG-kennisbank (`rag-query`,
+punt 3) raadpleegt of een ander n8n-proces start.
+
+**Hoe tool-calling werkt:** het model krijgt een lijst tools (naam, beschrijving,
+verwachte parameters). Beslist het model dat een tool nodig is, dan genereert het een
+gestructureerd JSON-blokje in plaats van antwoordtekst; Open WebUI voert de echte
+aanroep uit (de HTTP-call naar n8n) en geeft het resultaat terug aan het model voor het
+uiteindelijke antwoord.
+
+**Welke lokale modellen dit ondersteunen** (op basis van Ollama's `capabilities`-veld):
+
+| Model | Tools? | Opmerking |
+|---|---|---|
+| `llama3.1:8b` | ✅ | beste startpunt — snel, betrouwbaar formaat, al het algemene model |
+| `qwen2.5-coder:14b` | ✅ | prima, maar coding-georiënteerd |
+| `qwen3.5:0.8b` / `qwen3.5-9b-abliterated` | ✅ | Qwen-familie staat bekend als sterk in function calling |
+| `qwen3-vl` / `llama3.2-vision:11b` | ✅ | ook vision, zwaarder voor alleen tool-calling |
+| `huggingface.co/unsloth/gpt-oss-20b-GGUF` | ✅ | groot, dus trager |
+| `deepseek-r1:14b` | ✅ maar minder voorspelbaar — redeneermodel, genereert eerst een lange `<think>`-redenering vóór het (soms) het tool-JSON-formaat netjes volgt |
+| `huggingface.co/unsloth/gemma-3-12b-it-GGUF` | ❌ | geen tools-support |
+
+**Belangrijkste afweging:** dit is synchroon — de student wacht in de chat tot de
+n8n-workflow klaar is. Prima voor iets kort als `rag-query` (paar seconden), maar voor
+een langlopend n8n-proces zou een async ontwerp nodig zijn (trigger + apart ophalen van
+het resultaat in plaats van direct wachten).
+
+**Status:** 💡 idee, nog niet uitgewerkt. Bouwt voort op punt 1 (Agentic System) en punt 3
+(RAG) — met name geschikt als vervolg zodra de query-tool-agent aan de Worker gekoppeld
+is.
+
+---
+
+## 8. OpenClaw als communicatie wrapper
 
 **Wat is het?**
 Een communicatielaag bovenop Ollama die gestructureerde input/output afhandelt
