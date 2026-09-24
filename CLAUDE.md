@@ -35,6 +35,7 @@ Gericht op gebruik binnen MBO-onderwijs — privacy-proof, geen cloudverbinding.
 | `huggingface.co/city96/FLUX.1-dev-gguf:latest` | 23 GB | Image generation |
 | `huggingface.co/city96/stable-diffusion-3.5-large-turbo-gguf:latest` | 16 GB | Image generation |
 | `huggingface.co/ChristianAzinn/gte-small-gguf:latest` | 25 MB | Embeddings |
+| `nomic-embed-text:latest` | 274 MB | Embeddings (RAG, Fase 4 Qdrant) |
 
 Sweet spot voor dit systeem: **7B–14B parameter modellen** (Q4_K_M of Q5_K_M quantisatie).
 
