@@ -2,78 +2,70 @@
 
 ## Probleemstelling
 
-Ollama draait standaard onder een specifiek Windows-account. Studenten die inloggen met een ander account hebben daardoor geen toegang tot:
-- De Ollama-modellen die zijn gepulled
-- De Open WebUI-instantie en accounts
+Andere Windows-accounts op deze pc (bijv. `StudentenSoftware`) moeten de lokale LLM-omgeving
+kunnen gebruiken: de Ollama-modellen, Open WebUI, n8n en de RAG-kennisbank in Qdrant.
 
-De oplossing is Ollama en Open WebUI los te koppelen van een persoonlijk Windows-account door ze als gedeelde services te draaien.
+## Huidige situatie op deze pc
 
----
+| Onderdeel | Hoe het draait | Gevolg |
+|---|---|---|
+| Ollama | Per-gebruiker installatie in `C:\Users\abusa\AppData\Local\Programs\Ollama`, start via de opstartmap (tray-app) | **Géén Windows-service** — `sc query ollama` geeft "geen geïnstalleerde service". Draait alleen zolang `abusa` is ingelogd |
+| Modellen | `C:\Users\abusa\.ollama\models` (~110 GB) | In het profiel van `abusa` |
+| Docker Desktop | Start bij inloggen van `abusa`; `com.docker.service` staat op *Handmatig* | Open WebUI, n8n en Qdrant draaien alleen zolang `abusa` is ingelogd |
 
-## Probleem 1: Ollama-modellen niet zichtbaar voor andere accounts
+Alle diensten luisteren op `localhost`. Op Windows delen alle ingelogde sessies dezelfde
+`localhost`, dus een ander account kan ze gebruiken zolang de sessie van `abusa` actief is.
 
-Standaard slaat Ollama modellen op in `%USERPROFILE%\.ollama\models` — alleen zichtbaar voor het account dat ze heeft gepulled.
-
-### Oplossing: gedeelde modellenmap instellen
-
-1. Maak een gedeelde map aan, bijv. `C:\OllamaShared\models`
-2. Stel een **systeem-brede** omgevingsvariabele in:
-   - Zoek op "omgevingsvariabelen" → *Systeemeigenschappen* → *Omgevingsvariabelen*
-   - Onder **Systeemvariabelen** (niet gebruikersvariabelen): voeg toe:
-     - Naam: `OLLAMA_MODELS`
-     - Waarde: `C:\OllamaShared\models`
-3. Kopieer de bestaande modellen naar die map:
-   ```
-   %USERPROFILE%\.ollama\models  →  C:\OllamaShared\models
-   ```
-4. Geef alle studentaccounts (of "Gebruikers") leesrechten op de map
+> Let op: de officiële Ollama-installer voor Windows installeert **per gebruiker** en registreert
+> **geen** Windows-service. Docker Desktop heeft altijd een ingelogde gebruiker nodig.
 
 ---
 
-## Probleem 2: Ollama draait alleen als de primaire gebruiker is ingelogd
+## Aanbevolen: gebruik via de browser, beheerder blijft ingelogd
 
-### Oplossing: Ollama als Windows-service
+Geen extra installatie nodig.
 
-De officiële Ollama-installer registreert Ollama automatisch als Windows-service. Controleer of dit actief is:
+1. **Niet afmelden, maar wisselen.** De beheerder (`abusa`) gebruikt **Win+L → Andere gebruiker**
+   (snelle gebruikerswisseling). De sessie blijft op de achtergrond draaien, inclusief Ollama en Docker.
+2. **Open WebUI-account aanmaken.** Open WebUI heeft een eigen accountsysteem, los van Windows.
+   Als admin: *Admin Panel → Users* → gebruiker toevoegen met rol `user` (of registratie openstellen).
+3. **Tweede account opent `http://localhost:3000`** en logt in met het Open WebUI-account.
+   Alle modellen, RAG (Qdrant) en image generation zijn beschikbaar.
+4. **Optioneel n8n:** nodig extra gebruikers uit via *Settings → Users* op `http://localhost:5678`.
 
-```powershell
-sc query ollama
-```
+Het tweede account heeft zo geen toegang tot het Windows-profiel, de bestanden of de Claude-login
+van `abusa` — alleen tot de webdiensten.
 
-Als de service actief is (`RUNNING`), draait Ollama altijd op de achtergrond — ook als niemand is ingelogd.
+### Niet doen
 
-Zo niet, herinstalleer Ollama via de officiële installer op [ollama.com](https://ollama.com).
-
----
-
-## Probleem 3: Open WebUI niet bereikbaar voor andere accounts
-
-### Optie A: via Docker (aanbevolen)
-
-Als Open WebUI via Docker Compose draait, is het al een systeemdienst. Docker zelf draait als Windows-service, waardoor Open WebUI altijd beschikbaar is via de browser — ongeacht welk Windows-account is ingelogd.
-
-Controleer of Docker automatisch start:
-- Docker Desktop → Settings → General → **Start Docker Desktop when you sign in** (voor systeemdienst werkt dit ook zonder inloggen als Docker Engine als service is ingesteld)
-
-### Optie B: zonder Docker, via NSSM
-
-Gebruik [NSSM (Non-Sucking Service Manager)](https://nssm.cc) om Open WebUI als Windows-service te registreren:
-
-```bash
-nssm install OpenWebUI "python" "-m open_webui serve"
-nssm start OpenWebUI
-```
+- **Docker Desktop ook op het tweede account starten.** Docker Desktop is per gebruiker: het tweede
+  account krijgt eigen, lege volumes (geen Open WebUI-accounts, n8n-workflows of Qdrant-data) en
+  botst op dezelfde poorten.
+- **Ollama apart installeren op het tweede account.** Dat betekent ~110 GB aan modellen dubbel op
+  schijf, of gedoe met een gedeelde `OLLAMA_MODELS`-map. Voor browsergebruik is dat niet nodig.
 
 ---
 
-## Probleem 4: Open WebUI-accounts
+## Optioneel: onafhankelijk van ingelogde gebruiker
 
-Open WebUI heeft een **eigen accountsysteem**, los van Windows-accounts. Studenten loggen in via de browser met een Open WebUI-account.
+Alleen nodig als de pc onbeheerd moet draaien zonder dat `abusa` is ingelogd. Dit is een flinke
+verbouwing.
 
-Als admin kun je:
-- Zelf studentaccounts aanmaken via het admin-panel
-- Registratie openstellen zodat studenten zelf een account aanmaken
-- Rollen toewijzen: `user` of `admin`
+### Ollama bij opstarten via Taakplanner
+
+1. Taakplanner → *Taak maken*:
+   - *Uitvoeren ongeacht of gebruiker is aangemeld*, als account `abusa` (modellen blijven dan in
+     het bestaande profiel)
+   - Trigger: *Bij opstarten*
+   - Actie: `C:\Users\abusa\AppData\Local\Programs\Ollama\ollama.exe` met argument `serve`
+2. Verwijder de snelkoppeling `Ollama.lnk` uit de opstartmap van `abusa`, anders botsen de
+   tray-app en de taak op poort `11434`.
+
+### Docker zonder Docker Desktop
+
+Docker Desktop kan niet draaien zonder ingelogde gebruiker. Alternatief is Docker Engine direct in
+een WSL2-distributie (met systemd) te installeren en `docker-compose.yml` daar te draaien. Bestaande
+volumes (Open WebUI, n8n, Qdrant) moeten dan gemigreerd worden.
 
 ---
 
@@ -81,12 +73,7 @@ Als admin kun je:
 
 | Stap | Actie |
 |------|-------|
-| 1 | Systeemomgevingsvariabele `OLLAMA_MODELS` instellen op `C:\OllamaShared\models` |
-| 2 | Bestaande modellen kopiëren naar de gedeelde map |
-| 3 | Controleren dat Ollama als Windows-service draait (`sc query ollama`) |
-| 4 | Open WebUI via Docker (al een service) of via NSSM als service instellen |
-| 5 | Studentaccounts aanmaken in Open WebUI via het admin-panel |
-
-## Eindresultaat
-
-Studenten loggen in op hun eigen Windows-account, openen de browser, navigeren naar `http://localhost:3000` (of de geconfigureerde poort), en loggen in met hun Open WebUI-account. Ze hebben toegang tot alle modellen die zijn gepulled.
+| 1 | Beheerder (`abusa`) blijft ingelogd; wisselen via Win+L → Andere gebruiker |
+| 2 | Open WebUI-account aanmaken voor het tweede account (Admin Panel → Users) |
+| 3 | Tweede account gebruikt `http://localhost:3000` in de browser |
+| 4 | Optioneel: n8n-gebruiker uitnodigen; optioneel: Ollama via Taakplanner bij opstarten |

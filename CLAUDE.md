@@ -13,7 +13,7 @@ Gericht op gebruik binnen MBO-onderwijs — privacy-proof, geen cloudverbinding.
 - **OS:** Windows 11 Enterprise (geen winget beschikbaar)
 - **Python:** Miniconda
 - **Shell:** bash (via Claude Code)
-- **Ollama:** actief als Windows-service op poort `11434`
+- **Ollama:** per-gebruiker installatie (account `abusa`, tray-app via opstartmap) op poort `11434` — géén Windows-service; draait alleen zolang `abusa` is ingelogd
 - **Open WebUI:** draait via Docker op poort `3000`
 - **Claude Code:** vanaf nu direct geïnstalleerd en in gebruik op deze LLM-machine zelf (niet op een aparte devmachine)
 
