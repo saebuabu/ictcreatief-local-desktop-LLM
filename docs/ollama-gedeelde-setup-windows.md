@@ -87,7 +87,7 @@ volumes (Open WebUI, n8n, Qdrant) moeten dan gemigreerd worden.
 | 1 | **Herstarts opvangen:** automatisch inloggen voor `abusa` via Sysinternals *Autologon* (wachtwoord versleuteld), daarna vergrendelen; slaapstand uitzetten | Open |
 | 2 | **Open WebUI bereikbaar in het netwerk** | Geblokkeerd door netwerk — zie hieronder |
 | 3 | **n8n (5678) en Qdrant (6333) alleen lokaal** (`127.0.0.1` in `docker-compose.yml`) | Klaar |
-| 4 | **LM Studio uit autostart van `abusa`** (start nu met `--run-as-service`; kan poort 1234 en VRAM bezet houden) — of alleen het tweede account LM Studio laten gebruiken | Open |
+| 4 | **LM Studio uit autostart van `abusa`** (Run-key verwijderd en `enableLocalService` op `false` in `%USERPROFILE%\.lmstudio\settings.json`) | Klaar |
 | 5 | **Gedeelde modelmap** (bijv. `C:\AIModels`) voor LM Studio en ComfyUI (`extra_model_paths.yaml`), om dubbele opslag te voorkomen | Open |
 
 ### Toelichting taak 2: netwerk
