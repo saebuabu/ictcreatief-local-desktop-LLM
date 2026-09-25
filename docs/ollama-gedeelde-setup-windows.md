@@ -77,3 +77,44 @@ volumes (Open WebUI, n8n, Qdrant) moeten dan gemigreerd worden.
 | 2 | Open WebUI-account aanmaken voor het tweede account (Admin Panel → Users) |
 | 3 | Tweede account gebruikt `http://localhost:3000` in de browser |
 | 4 | Optioneel: n8n-gebruiker uitnodigen; optioneel: Ollama via Taakplanner bij opstarten |
+
+---
+
+## Status en openstaande taken (stand 2026-09-25)
+
+| # | Taak | Status |
+|---|------|--------|
+| 1 | **Herstarts opvangen:** automatisch inloggen voor `abusa` via Sysinternals *Autologon* (wachtwoord versleuteld), daarna vergrendelen; slaapstand uitzetten | Open |
+| 2 | **Open WebUI bereikbaar in het netwerk** | Geblokkeerd door netwerk — zie hieronder |
+| 3 | **n8n (5678) en Qdrant (6333) alleen lokaal** (`127.0.0.1` in `docker-compose.yml`) | Klaar |
+| 4 | **LM Studio uit autostart van `abusa`** (start nu met `--run-as-service`; kan poort 1234 en VRAM bezet houden) — of alleen het tweede account LM Studio laten gebruiken | Open |
+| 5 | **Gedeelde modelmap** (bijv. `C:\AIModels`) voor LM Studio en ComfyUI (`extra_model_paths.yaml`), om dubbele opslag te voorkomen | Open |
+
+### Toelichting taak 2: netwerk
+
+- Firewallregel is aangemaakt (als Administrator):
+  ```powershell
+  New-NetFirewallRule -DisplayName "Open WebUI (TCP 3000)" -Direction Inbound -Protocol TCP -LocalPort 3000 -RemoteAddress LocalSubnet -Action Allow -Profile Any
+  ```
+- De pc zit bekabeld op het gastnetwerk van school (netwerkprofiel "Guest", *Public*, IP via DHCP).
+  Een laptop op **eduroam** kan de pc niet bereiken: verkeer tussen deze netwerken wordt door het
+  schoolnetwerk geblokkeerd.
+- **Volgende stap:** netwerkbeheerder vragen om
+  - een vast IP-adres (DHCP-reservering) voor deze pc;
+  - verkeer van eduroam (en eventueel het docentennetwerk) naar deze pc op TCP 3000 toe te staan,
+    of de pc in een VLAN te plaatsen dat daar wel bereikbaar is.
+- Daarna de firewallregel uitbreiden met het IP-bereik van eduroam (`LocalSubnet` dekt dat niet).
+- **Plan B:** een eigen, afgesloten "AI-lokaal"-wifi (router/access point niet gekoppeld aan het
+  schoolnetwerk) via een tweede netwerkadapter in de pc — alleen met toestemming van de
+  netwerkbeheerder.
+- **Niet doen:** een publieke tunnel (bijv. Cloudflare) — zet de web UI op internet en botst met
+  de privacy-eis. VPN-oplossingen (bijv. Tailscale) alleen in overleg met de netwerkbeheerder.
+
+### Aandachtspunt: gedeelde GPU
+
+Beide Windows-sessies delen dezelfde 16 GB VRAM. Als ComfyUI/LM Studio en Ollama tegelijk grote
+modellen laden, crasht een van beide (out of memory) of valt Ollama terug op de CPU (veel trager).
+Mogelijke maatregelen:
+- Systeemvariabelen `OLLAMA_KEEP_ALIVE=1m` en `OLLAMA_MAX_LOADED_MODELS=1`
+- ComfyUI starten met `--lowvram`
+- Afspraken over zware image generation buiten drukke lesuren
