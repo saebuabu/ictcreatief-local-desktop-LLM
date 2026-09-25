@@ -23,7 +23,7 @@ services:
     image: docker.n8n.io/n8nio/n8n:${N8N_IMAGE_TAG:-latest}
     container_name: n8n
     ports:
-      - "${N8N_PORT:-5678}:5678"
+      - "127.0.0.1:${N8N_PORT:-5678}:5678"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -39,7 +39,7 @@ services:
     image: qdrant/qdrant:latest
     container_name: qdrant
     ports:
-      - "${QDRANT_PORT:-6333}:6333"
+      - "127.0.0.1:${QDRANT_PORT:-6333}:6333"
     volumes:
       - qdrant_data:/qdrant/storage
     restart: unless-stopped
