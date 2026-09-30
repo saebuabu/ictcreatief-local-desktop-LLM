@@ -85,7 +85,7 @@ volumes (Open WebUI, n8n, Qdrant) moeten dan gemigreerd worden.
 | # | Taak | Status |
 |---|------|--------|
 | 1 | **Herstarts opvangen:** automatisch inloggen voor `abusa` via Sysinternals *Autologon* (wachtwoord versleuteld), daarna vergrendelen; slaapstand uitzetten | Open |
-| 2 | **Open WebUI bereikbaar in het netwerk** | Geblokkeerd door netwerk — zie hieronder |
+| 2 | **Open WebUI bereikbaar in het netwerk** | Gekozen aanpak: eigen "AI-lokaal"-wifi (Plan B) — zie hieronder |
 | 3 | **n8n (5678) en Qdrant (6333) alleen lokaal** (`127.0.0.1` in `docker-compose.yml`) | Klaar |
 | 4 | **LM Studio uit autostart van `abusa`** (Run-key verwijderd en `enableLocalService` op `false` in `%USERPROFILE%\.lmstudio\settings.json`) | Klaar |
 | 5 | **Gedeelde modelmap** (bijv. `C:\AIModels`) voor LM Studio en ComfyUI (`extra_model_paths.yaml`), om dubbele opslag te voorkomen | Open |
@@ -97,16 +97,21 @@ volumes (Open WebUI, n8n, Qdrant) moeten dan gemigreerd worden.
   New-NetFirewallRule -DisplayName "Open WebUI (TCP 3000)" -Direction Inbound -Protocol TCP -LocalPort 3000 -RemoteAddress LocalSubnet -Action Allow -Profile Any
   ```
 - De pc zit bekabeld op het gastnetwerk van school (netwerkprofiel "Guest", *Public*, IP via DHCP).
-  Een laptop op **eduroam** kan de pc niet bereiken: verkeer tussen deze netwerken wordt door het
-  schoolnetwerk geblokkeerd.
-- **Volgende stap:** netwerkbeheerder vragen om
-  - een vast IP-adres (DHCP-reservering) voor deze pc;
-  - verkeer van eduroam (en eventueel het docentennetwerk) naar deze pc op TCP 3000 toe te staan,
-    of de pc in een VLAN te plaatsen dat daar wel bereikbaar is.
-- Daarna de firewallregel uitbreiden met het IP-bereik van eduroam (`LocalSubnet` dekt dat niet).
-- **Plan B:** een eigen, afgesloten "AI-lokaal"-wifi (router/access point niet gekoppeld aan het
-  schoolnetwerk) via een tweede netwerkadapter in de pc — alleen met toestemming van de
-  netwerkbeheerder.
+  Leerlingen zitten op een ander netwerk (bijv. eduroam): verkeer tussen deze netwerken wordt door
+  het schoolnetwerk geblokkeerd.
+- **Gekozen aanpak (stand 2026-09-30): Plan B — eigen "AI-lokaal"-wifi.** Eigen router aansluiten
+  via een tweede netwerkadapter op de pc (bijv. USB-naar-ethernet), los van de bekabelde verbinding
+  naar het schoolnetwerk. Leerlingen verbinden met het wifi van die router en bereiken de pc op
+  `http://<ip-op-dat-netwerk>:3000`. De bestaande firewallregel (`RemoteAddress LocalSubnet`,
+  `Profile Any`) dekt dit automatisch — `LocalSubnet` wordt per interface herberekend, geen
+  aanpassing nodig. Voordeel: dit segment hoeft niet op internet aangesloten te zijn, dus geen
+  lek naar buiten (past bij de no-cloud eis).
+  - **Let op:** dit is nog niet uitgevoerd — eerst communiceren met de netwerkbeheerder (niet
+    vanwege techniek, maar omdat een niet-goedgekeurde access point op schoolterrein tegen het
+    beleid kan zijn en als rogue AP gedetecteerd kan worden).
+- **Alternatief, niet gekozen:** netwerkbeheerder vragen om vast IP + toegang vanaf eduroam naar
+  deze pc op TCP 3000 (of pc in ander VLAN); firewallregel dan uitbreiden met het IP-bereik van
+  eduroam (`LocalSubnet` dekt dat niet).
 - **Niet doen:** een publieke tunnel (bijv. Cloudflare) — zet de web UI op internet en botst met
   de privacy-eis. VPN-oplossingen (bijv. Tailscale) alleen in overleg met de netwerkbeheerder.
 
