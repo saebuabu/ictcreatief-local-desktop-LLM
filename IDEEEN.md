@@ -184,4 +184,38 @@ lokale model — met mogelijke logging, rate limiting en foutafhandeling.
 
 ---
 
+## 9. Code-review assistent gekoppeld aan GitHub/Azure DevOps
+
+**Wat is het?**
+Bij het openen/updaten van een pull request stuurt GitHub (of Azure DevOps) een webhook naar
+n8n. n8n haalt de diff op, laat Ollama reviewcommentaar genereren en post dat terug als
+PR-comment — voordat een docent er zelf naar kijkt.
+
+**Waarom interessant?**
+Snellere feedbackloop voor studenten, minder nakijktijd voor docenten. Kan hergebruikt worden
+als vervolgtoepassing van de bestaande agentic-pipeline (punt 1): `qwen2.5-coder:14b` als
+Worker genereert de review, een Critic-pass (bijv. `deepseek-r1:14b`) filtert triviale/onzekere
+opmerkingen eruit zodat studenten niet worden platgegooid met AI-ruis — hetzelfde
+Coordinator/Worker/Critic-patroon uit Fase 2, nu toegepast op PR-diffs i.p.v. chatvragen.
+Evt. aan te vullen met RAG (punt 3) over de coding conventions van de opleiding.
+
+**Mogelijke aanpak:**
+- GitHub: repo → Settings → Webhooks, event `pull_request`, payload URL = n8n webhook-node.
+  n8n haalt bestanden/diff op via de GitHub REST API (PAT of GitHub App, least privilege) en
+  post het resultaat terug via `POST /repos/{owner}/{repo}/pulls/{pr}/reviews` (of losse
+  regel-comments via `/comments`).
+- Azure DevOps: vergelijkbaar via Project Settings → Service Hooks →
+  "Pull request created/updated" → Web Hook, terugposten via de Azure DevOps REST API.
+- Infra: n8n moet vanaf internet bereikbaar zijn (reverse proxy met HTTPS, bijv. Caddy/nginx of
+  een Cloudflare Tunnel) + GitHub's webhook-secret verifiëren in de workflow.
+- **Privacy-afweging:** de "geen cloudverbinding"-eis uit `CLAUDE.md` geldt voor
+  privacygevoelige data/persoonsgegevens — code in een private repo op GitHub/Azure DevOps
+  valt daar niet onder, dus een directe webhook (i.p.v. een self-hosted runner die alleen
+  uitgaand pollt) is hier een geldige, eenvoudigere optie.
+
+**Status:** ⏸️ geparkeerd — geïnspireerd op een brainstormsessie (2026-09-21), nog niet
+uitgewerkt. Bouwt voort op punt 1 (Agentic System) en optioneel punt 3 (RAG).
+
+---
+
 *Ideeën zijn nog niet uitgewerkt. Sommige bouwen op elkaar voort (bijv. RAG + Agentic + n8n).*
