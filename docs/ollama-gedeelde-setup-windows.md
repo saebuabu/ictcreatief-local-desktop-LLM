@@ -80,7 +80,7 @@ volumes (Open WebUI, n8n, Qdrant) moeten dan gemigreerd worden.
 
 ---
 
-## Status en openstaande taken (stand 2026-09-25)
+## Status en openstaande taken (stand 2026-09-30)
 
 | # | Taak | Status |
 |---|------|--------|
