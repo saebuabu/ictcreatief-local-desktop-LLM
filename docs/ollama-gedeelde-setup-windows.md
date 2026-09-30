@@ -84,7 +84,7 @@ volumes (Open WebUI, n8n, Qdrant) moeten dan gemigreerd worden.
 
 | # | Taak | Status |
 |---|------|--------|
-| 1 | **Herstarts opvangen:** automatisch inloggen voor `abusa` via Sysinternals *Autologon* (wachtwoord versleuteld), daarna vergrendelen; slaapstand uitzetten | Open |
+| 1 | **Herstarts opvangen:** automatisch inloggen voor `abusa` via Sysinternals *Autologon* (wachtwoord versleuteld), daarna vergrendelen; slaapstand uitzetten | Klaar |
 | 2 | **Open WebUI bereikbaar in het netwerk** | Gekozen aanpak: eigen "AI-lokaal"-wifi (Plan B) — zie hieronder |
 | 3 | **n8n (5678) en Qdrant (6333) alleen lokaal** (`127.0.0.1` in `docker-compose.yml`) | Klaar |
 | 4 | **LM Studio uit autostart van `abusa`** (Run-key verwijderd en `enableLocalService` op `false` in `%USERPROFILE%\.lmstudio\settings.json`) | Klaar |
