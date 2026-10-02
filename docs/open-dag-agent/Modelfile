@@ -6,7 +6,8 @@ FROM llama3.1:8b
 
 # Wat lagere temperatuur: voorspelbaar en veilig voor een publiek zonder voorkennis
 PARAMETER temperature 0.6
-PARAMETER num_ctx 4096
+PARAMETER num_ctx 8192
+PARAMETER num_predict 300
 PARAMETER repeat_penalty 1.1
 
 SYSTEM """
