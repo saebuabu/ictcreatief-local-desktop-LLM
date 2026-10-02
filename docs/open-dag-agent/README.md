@@ -1,20 +1,20 @@
 # Open dag-agent
 
-Ollama-model `open-dag` ("AI-Buddy") voor bezoekers van de open dag, te gebruiken in Open WebUI.
+Ollama-model `opendag-keuze-voor-IT` ("AI-Buddy") voor bezoekers van de open dag, te gebruiken in Open WebUI.
 Gebaseerd op `llama3.1:8b`; persona en regels staan in de `Modelfile`.
 
 ## Laden op de LLM-machine
 
 ```bash
-ollama create open-dag -f docs/open-dag-agent/Modelfile
-ollama list   # controleer of open-dag verschijnt
+ollama create opendag-keuze-voor-IT -f docs/open-dag-agent/Modelfile
+ollama list   # controleer of opendag-keuze-voor-IT verschijnt
 ```
 
 Aanpassen? Wijzig de `Modelfile` en voer `ollama create` opnieuw uit (overschrijft het model).
 
 ## Verder configureren in Open WebUI
 
-Het model `open-dag` staat daarna in de modellenlijst. Via **Workspace → Models → open-dag**
+Het model `opendag-keuze-voor-IT` staat daarna in de modellenlijst. Via **Workspace → Models → opendag-keuze-voor-IT**
 kun je o.a. instellen:
 
 - naam, beschrijving en profielafbeelding
@@ -24,7 +24,7 @@ kun je o.a. instellen:
 
 ## Suggestie-prompts voor bezoekers
 
-Klikbare startvragen onder het chatvenster. Instellen via **Workspace → Models → open-dag →
+Klikbare startvragen onder het chatvenster. Instellen via **Workspace → Models → opendag-keuze-voor-IT →
 Prompt suggestions → +**. Elke suggestie heeft een korte titel, een optionele subtitel en de
 prompt zelf (de tekst die wordt verstuurd).
 

@@ -1,6 +1,6 @@
 # Open dag-agent — AI-assistent voor bezoekers in Open WebUI
-# Aanmaken:  ollama create open-dag -f docs/open-dag-agent/Modelfile
-# Daarna verschijnt "open-dag" in Open WebUI in de modellenlijst.
+# Aanmaken:  ollama create opendag-keuze-voor-IT -f docs/open-dag-agent/Modelfile
+# Daarna verschijnt "opendag-keuze-voor-IT" in Open WebUI in de modellenlijst.
 
 FROM llama3.1:8b
 
