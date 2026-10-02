@@ -6,7 +6,7 @@ Gebaseerd op `llama3.1:8b`; persona en regels staan in de `Modelfile`.
 ## Laden op de LLM-machine
 
 ```bash
-ollama create opendag-keuze-voor-IT -f docs/open-dag-agent/Modelfile
+ollama create opendag-keuze-voor-IT -f docs/opendag-keuze-voor-IT/Modelfile
 ollama list   # controleer of opendag-keuze-voor-IT verschijnt
 ```
 
@@ -14,19 +14,27 @@ Aanpassen? Wijzig de `Modelfile` en voer `ollama create` opnieuw uit (overschrij
 
 ## Verder configureren in Open WebUI
 
-Het model `opendag-keuze-voor-IT` staat daarna in de modellenlijst. Via **Workspace → Models → opendag-keuze-voor-IT**
-kun je o.a. instellen:
+Het ruwe Ollama-model `opendag-keuze-voor-IT` staat als basismodel in de keuzelijst van de chat,
+maar verschijnt in deze Open WebUI-versie niet vanzelf onder **Workspace → Models** — daar staan
+alleen expliciet aangemaakte "workspace models" (wrappers om een basismodel heen met eigen naam,
+avatar, suggestie-prompts etc.).
+
+Voor de open dag is zo'n wrapper al aangemaakt: **AI-Buddy (Open dag)** (model-ID `ai-buddy-open-dag`,
+basismodel `opendag-keuze-voor-IT:latest`). Aanpassen kan via **Workspace → Models → AI-Buddy (Open dag)**:
 
 - naam, beschrijving en profielafbeelding
 - suggestie-prompts (klikbare startvragen voor bezoekers)
 - toegang: alleen zichtbaar voor een gast-gebruiker/-groep
 - kennisbank (RAG) met informatie over de opleiding
 
+Zelf opnieuw aanmaken (bijv. op een andere machine): **Workspace → Models → + Nieuwe model**,
+kies basismodel `opendag-keuze-voor-IT:latest`, en vul de suggestie-prompts hieronder in.
+
 ## Suggestie-prompts voor bezoekers
 
-Klikbare startvragen onder het chatvenster. Instellen via **Workspace → Models → opendag-keuze-voor-IT →
-Prompt suggestions → +**. Elke suggestie heeft een korte titel, een optionele subtitel en de
-prompt zelf (de tekst die wordt verstuurd).
+Klikbare startvragen onder het chatvenster, al ingevuld in **AI-Buddy (Open dag)**. Aanpassen via
+**Workspace → Models → AI-Buddy (Open dag) → Prompts → Aangepast → +**. Elke suggestie heeft een
+korte titel, een optionele subtitel en de prompt zelf (de tekst die wordt verstuurd).
 
 | Titel | Subtitel | Prompt |
 |---|---|---|
@@ -39,7 +47,7 @@ prompt zelf (de tekst die wordt verstuurd).
 | Is dit veilig? | Waar blijft mijn gesprek? | Waar gaat mijn gesprek met jou naartoe? Is dit veilig? |
 | Voor ouders | Mijn kind wil IT gaan doen | Mijn kind wil een IT-opleiding gaan doen. Wat moet ik hiervan weten? |
 
-Open WebUI toont er een paar tegelijk, dus acht is ruim voldoende.
+Open WebUI toont er een paar tegelijk (willekeurig gekozen uit de acht), dus acht is ruim voldoende.
 
 ## Nog invullen
 
