@@ -26,7 +26,7 @@ Geen cloudverbinding nodig — alle data blijft lokaal....
 
 ### 1. Installeer Ollama
 
-Download en installeer Ollama via [ollama.com](https://ollama.com). Ollama draait als Windows-service en detecteert automatisch je GPU.
+Download en installeer Ollama via [ollama.com](https://ollama.com). Ollama is een per-gebruiker installatie (tray-app via de opstartmap), geen Windows-service: het draait alleen zolang dat account is ingelogd. Het detecteert automatisch je GPU.
 
 ### 2. Download een model
 
