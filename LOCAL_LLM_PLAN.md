@@ -71,7 +71,7 @@ These models fit comfortably in GPU memory:
 ### Phase 2: Install Ollama
 
 1. Download Ollama from **https://ollama.com** (Windows installer)
-2. Run the installer — it installs as a Windows system service
+2. Run the installer — it installs per user (tray app via the Startup folder), not as a Windows service; Ollama only runs while that account is logged in
 3. Open a terminal (PowerShell or CMD) and verify:
    ```
    ollama --version
