@@ -16,6 +16,7 @@ Geen cloudverbinding nodig — alle data blijft lokaal....
 | [`docs/n8n-setup.md`](docs/n8n-setup.md) | n8n koppelen aan Ollama: setup, voorbeeldworkflow, troubleshooting |
 | [`docs/n8n-onedrive-opdracht-review.md`](docs/n8n-onedrive-opdracht-review.md) | OneDrive-opdrachten automatisch laten samenvatten en beoordelen |
 | [`docs/agentic-systems.md`](docs/agentic-systems.md) | Agents die via n8n met elkaar communiceren: architectuur, stappenplan, Fase 1-4 |
+| [`scripts/belastingtest.py`](scripts/belastingtest.py) | Belastingtest: N gelijktijdige leerlingen op één model, meet snelheid en wachttijd |
 | [`rag-documents/`](rag-documents/) | Brondocumenten voor de lokale kennisbank (RAG, Fase 4) — niet in git |
 | [`IDEEEN.md`](IDEEEN.md) | Uitbreidingsideeën: agentic system, MCP, RAG, en meer |
 
@@ -91,6 +92,26 @@ Geoptimaliseerd voor:
 
 Aanbevolen modellen voor deze hardware: `7B–14B` parameter modellen (Q4_K_M of Q5_K_M quantisatie).
 Zie [`LOCAL_LLM_PLAN.md`](LOCAL_LLM_PLAN.md) voor een volledig overzicht.
+
+---
+
+## Belastingtest (klas)
+
+Test hoeveel gelijktijdige leerlingen Ollama aankan op hetzelfde model. Het script
+`scripts/belastingtest.py` stuurt N gelijktijdige aanvragen rechtstreeks naar Ollama en meet per
+leerling de tijd tot de eerste token en de tokens per seconde. Het gebruikt alleen de
+standaardbibliotheek van Python.
+
+```bash
+python scripts/belastingtest.py                               # 25 leerlingen, llama3.1:8b
+python scripts/belastingtest.py --model llama3.1:8b --users 25
+python scripts/belastingtest.py --users 25 --stagger 5        # starts gespreid over 5 seconden
+```
+
+Draai tijdens de test `ollama ps` in een tweede venster: staat er CPU bij, dan is het VRAM vol.
+Stel `OLLAMA_NUM_PARALLEL` (begin met `6`) zo in dat de traagste leerling nog circa 5 tok/s haalt
+en de eerste token binnen circa 10 seconden komt. Zet daarbij ook `OLLAMA_CONTEXT_LENGTH=4096`.
+Open WebUI voegt achtergrondtaken toe (titels, tags); zet die uit voor een realistische meting.
 
 ---
 
