@@ -355,7 +355,7 @@ aan bij de eerste keer schrijven.
    - **Ollama**: base URL `http://host.docker.internal:11434`
    - **Qdrant API**: URL `http://qdrant:6333` (via het interne Docker-netwerk — de
      containers bereiken elkaar op servicenaam, net zoals n8n nu al
-     `host.docker.internal` gebruikt om de Windows-Ollama-service te bereiken)
+     `host.docker.internal` gebruikt om de Ollama op Windows te bereiken)
 4. Na het importeren van de workflow: open de **Embeddings Ollama**- en **Qdrant Vector
    Store**-node en selecteer de zojuist aangemaakte credential in de dropdown — dat veld
    staat niet vooraf ingevuld in de JSON.

@@ -44,7 +44,7 @@ ongeacht de setup-status van de editor.
 
 ## Ollama aanroepen vanuit n8n
 
-n8n draait in een container en bereikt de native Windows Ollama-service via:
+n8n draait in een container en bereikt de native Windows Ollama (per-gebruiker tray-app, geen service) via:
 
 ```
 http://host.docker.internal:11434
