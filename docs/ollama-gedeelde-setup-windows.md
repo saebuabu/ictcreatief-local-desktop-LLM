@@ -115,6 +115,14 @@ volumes (Open WebUI, n8n, Qdrant) moeten dan gemigreerd worden.
 - **Niet doen:** een publieke tunnel (bijv. Cloudflare) — zet de web UI op internet en botst met
   de privacy-eis. VPN-oplossingen (bijv. Tailscale) alleen in overleg met de netwerkbeheerder.
 
+### ComfyUI-locatie (gedeeld)
+
+ComfyUI (portable) staat op `C:\AI\ComfyUI\ComfyUI_windows_portable` (voorheen op het Bureaublad van
+`abusa`). Rechten komen van `C:\AI`: *Geverifieerde gebruikers* hebben Modify, dus elk account kan
+starten met `run_nvidia_gpu.bat`. Workflows/instellingen (`ComfyUI\user`) en `output\` zijn gedeeld;
+voor aparte profielen kan ComfyUI met `--multi-user` worden gestart. Maar één instantie tegelijk
+(GPU en poort 8188).
+
 ### Aandachtspunt: gedeelde GPU
 
 Beide Windows-sessies delen dezelfde 16 GB VRAM. Als ComfyUI/LM Studio en Ollama tegelijk grote
