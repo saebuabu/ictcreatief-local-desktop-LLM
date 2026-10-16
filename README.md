@@ -17,6 +17,7 @@ Geen cloudverbinding nodig — alle data blijft lokaal....
 | [`docs/n8n-onedrive-opdracht-review.md`](docs/n8n-onedrive-opdracht-review.md) | OneDrive-opdrachten automatisch laten samenvatten en beoordelen |
 | [`docs/agentic-systems.md`](docs/agentic-systems.md) | Agents die via n8n met elkaar communiceren: architectuur, stappenplan, Fase 1-4 |
 | [`docs/examen-rag-model.md`](docs/examen-rag-model.md) | Examencoach: eigen Open WebUI-model met de readers van alle jaren als RAG-bron |
+| [`scripts/reader_verrijken.py`](scripts/reader_verrijken.py) | PDF-readers verrijken: afbeeldingen/schema's laten beschrijven door een lokaal vision-model |
 | [`scripts/upload_readers.py`](scripts/upload_readers.py) | Readers in bulk uploaden naar een Open WebUI Knowledge-collectie |
 | [`scripts/belastingtest.py`](scripts/belastingtest.py) | Belastingtest: N gelijktijdige leerlingen op één model, meet snelheid en wachttijd |
 | [`rag-documents/`](rag-documents/) | Brondocumenten voor de lokale kennisbank (RAG, Fase 4) — niet in git |

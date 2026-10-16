@@ -13,6 +13,38 @@ ChromaDB zit al in Open WebUI; Qdrant is hiervoor niet nodig.
   PDF's eerst door OCR halen, anders zijn ze leeg voor het model.
 - Verouderde readers verwijderen of het jaar in de naam laten staan.
 
+## 1b. Afbeeldingen en schema's meenemen
+
+Open WebUI leest standaard alleen de tekstlaag van een pdf; afbeeldingen en
+schema's zijn dan onzichtbaar voor de RAG. Oplossing: eerst verrijken met een
+lokaal vision-model (geen cloud, past bij de privacy-eis).
+
+```
+pip install pymupdf
+python scripts/reader_verrijken.py C:eaders C:eaders_md --dry-run   # telt plaatjes
+python scripts/reader_verrijken.py C:eaders C:eaders_md             # beschrijven
+python scripts/upload_readers.py   C:eaders_md                         # uploaden
+```
+
+Het script maakt per reader een markdown-bestand met "Pagina N"-kopjes. Elke
+afbeelding of elk schema wordt vervangen/aangevuld met een tekstbeschrijving
+van `qwen3-vl` (of `--model llama3.2-vision:11b`). Details:
+
+- Ingesloten afbeeldingen worden los beschreven; kleine iconen
+  (`--min-px`) worden overgeslagen.
+- Schema's zijn vaak vectortekeningen. Pagina's met veel tekenelementen
+  (`--min-tekeningen`, standaard 30) en zonder ingesloten afbeelding worden
+  als geheel gerenderd en beschreven. Zet op 0 om dit uit te schakelen.
+- Beschrijvingen worden gecachet; onderbreken en hervatten kan. Bij een fout
+  (bijv. Ollama niet actief) wordt voor die reader niets geschreven.
+- Het kost rekentijd (één vision-aanroep per plaatje): draai het eenmalig,
+  eventueel 's nachts. Zorg dat er VRAM vrij is (LM Studio sluiten).
+
+Beperkingen: een beschrijving is een samenvatting en kan details missen, dus
+controleer een steekproef per reader. De coach kan het plaatje niet tonen,
+alleen uitleggen en het paginanummer noemen; vraag daarom in de systeemprompt
+om paginanummers in de bronvermelding (zie stap 4).
+
 ## 2. Embedding en RAG-instellingen
 
 Admin Panel → Settings → Documents:
@@ -33,7 +65,8 @@ alles opnieuw worden geïndexeerd.
 
 Handmatig: Workspace → Knowledge → + New Knowledge → "Examenreaders" → uploaden.
 
-Of met het script (aanbevolen, ook voor nieuwe jaren):
+Of met het script (aanbevolen, ook voor nieuwe jaren). Gebruik de map met
+verrijkte bestanden uit stap 1b als je afbeeldingen meeneemt:
 
 ```
 # API-key: Open WebUI → Instellingen → Account → API-sleutels
@@ -63,7 +96,7 @@ Workspace → Models → + New Model:
 Je bent een studiecoach voor examenkandidaten.
 Beantwoord vragen UITSLUITEND op basis van de meegeleverde readers.
 - Staat het antwoord niet in de readers? Zeg dan duidelijk: "Dit staat niet in de readers" en verzin niets.
-- Vermeld altijd uit welke reader (naam en jaar) je informatie komt.
+- Vermeld altijd uit welke reader (naam, jaar en paginanummer) je informatie komt.
 - Wijkt de informatie tussen jaren af, benoem dan het verschil en noem de nieuwste versie.
 - Antwoord in het Nederlands, in eenvoudige taal.
 ```
