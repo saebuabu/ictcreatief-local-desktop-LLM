@@ -4,3 +4,6 @@
 # RAG brondocumenten (Fase 4) — lokale inhoud, niet in git
 rag-documents/*
 !rag-documents/.gitkeep
+
+# Lokale back-ups (bv. Open WebUI-instellingen) — niet in git
+backups/
