@@ -15,6 +15,8 @@ services:
       - RAG_EMBEDDING_ENGINE=ollama
       - RAG_EMBEDDING_MODEL=nomic-embed-text
       - RAG_OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      # Tijdelijk ngrok-adres voor collega-test; per tunnel aanpassen (zie docs/examencoach-ngrok-collega-test.md)
+      - CORS_ALLOW_ORIGIN=http://localhost:3000;https://agreed-ethically-erupt.ngrok-free.dev
     depends_on:
       - qdrant
     restart: unless-stopped
