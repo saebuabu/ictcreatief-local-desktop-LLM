@@ -39,14 +39,19 @@ Doel: collega's laten testen en feedback laten geven op de Examencoach
 ## Tunnel starten
 
 ```
-ngrok http 3000 --basic-auth "naam:wachtwoord"
+ngrok http 3000 --url <vast-domein>.ngrok-free.dev --oauth google --oauth-allow-email collega1@kw1c.nl --oauth-allow-email collega2@kw1c.nl
 ```
 
-- Wachtwoord minimaal 8 tekens, alleen delen met de collega's.
-- Gebruik de basic-auth als extra slot vóór de Open WebUI-login. Een
-  OAuth-beperking op het domein `kw1c.nl` is hier niet geschikt, omdat
-  studenten mogelijk ook een kw1c-adres hebben.
-- Deel de link en het wachtwoord alleen met de testgroep.
+- Per collega één `--oauth-allow-email`. Alleen die adressen komen langs de
+  Google-login van ngrok, daarna volgt de Open WebUI-login.
+- Gebruik bewust **geen** `--oauth-allow-domain kw1c.nl`: studenten hebben
+  mogelijk ook een kw1c-adres.
+- **Geen `--basic-auth`.** Open WebUI stuurt bij zijn eigen API-aanroepen een
+  `Authorization: Bearer`-header mee die de `Basic`-header van de browser
+  vervangt. ngrok weigert dat met een 401, waardoor de basic-auth-popup steeds
+  terugkomt, ook met de juiste gegevens (getest op 2026-11-02). OAuth werkt met
+  cookies en heeft dit probleem niet.
+- Deel de link alleen met de testgroep.
 
 ## Feedback verzamelen
 
@@ -72,7 +77,8 @@ wachttijden. Stel zo nodig `OLLAMA_NUM_PARALLEL` af met
 3. Testchats opruimen als die niet bewaard moeten blijven voordat studenten
    het model gebruiken.
 4. Feedback verwerken in de systeemprompt van het model.
-5. Voor een volgende ronde: nieuw basic-auth-wachtwoord kiezen.
+5. Voor een volgende ronde: de lijst met `--oauth-allow-email`-adressen
+   nalopen.
 
 ## Gecontroleerde stand (2026-11-02)
 
@@ -99,7 +105,10 @@ Alleen gelezen, niets gewijzigd.
 - [ ] Code interpreter uitgezet voor gebruikers, indien gewenst (Admin Panel →
       Settings → Users → Default Permissions → Features)
 - [ ] CORS vastgezet op de ngrok-URL (kan pas als de tunnel draait)
-- [ ] Tunnel gestart met `--basic-auth`
-- [ ] Link en wachtwoord alleen met collega's gedeeld
+- [ ] Tunnel gestart met `--oauth google` en `--oauth-allow-email` per collega
+      (niet met `--basic-auth`)
+- [ ] Link alleen met collega's gedeeld
+- [ ] Wachtwoorden van `a.saebu`, `student` en `bezoeker` sterk (of de laatste
+      twee tijdelijk uitgezet)
 - [ ] Optioneel: oude toegangsregels van het niet-bestaande gebruikers-ID opruimen
 - [ ] Na afloop: tunnel gestopt, accounts opgeruimd
