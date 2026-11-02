@@ -39,18 +39,32 @@ Doel: collega's laten testen en feedback laten geven op de Examencoach
 ## Tunnel starten
 
 ```
-ngrok http 3000 --url <vast-domein>.ngrok-free.dev --oauth google --oauth-allow-email collega1@kw1c.nl --oauth-allow-email collega2@kw1c.nl
+ngrok http 3000 --url <vast-domein>.ngrok-free.dev
 ```
 
-- Per collega één `--oauth-allow-email`. Alleen die adressen komen langs de
-  Google-login van ngrok, daarna volgt de Open WebUI-login.
-- Gebruik bewust **geen** `--oauth-allow-domain kw1c.nl`: studenten hebben
-  mogelijk ook een kw1c-adres.
-- **Geen `--basic-auth`.** Open WebUI stuurt bij zijn eigen API-aanroepen een
-  `Authorization: Bearer`-header mee die de `Basic`-header van de browser
-  vervangt. ngrok weigert dat met een 401, waardoor de basic-auth-popup steeds
-  terugkomt, ook met de juiste gegevens (getest op 2026-11-02). OAuth werkt met
-  cookies en heeft dit probleem niet.
+Gekozen: **geen extra slot op de tunnel**, alleen de Open WebUI-login.
+Redenen waarom de alternatieven afvielen:
+
+- **`--basic-auth`** werkt niet. Open WebUI stuurt bij zijn eigen API-aanroepen
+  een `Authorization: Bearer`-header mee die de `Basic`-header van de browser
+  vervangt. ngrok weigert dat met een 401, waardoor de popup steeds terugkomt,
+  ook met de juiste gegevens (getest op 2026-11-02).
+- **`--oauth microsoft`** kan niet: inloggen met externe apps op het
+  kw1c-account loopt via de schoolbeheerder.
+- **`--oauth google`** werkt niet met de kw1c-adressen: de mail draait op
+  Microsoft 365, dus er bestaat geen Google-account bij die adressen. Het kan
+  wel met privé-Gmailadressen van collega's (`--oauth-allow-email`), maar daar
+  is niet voor gekozen.
+
+Omdat de loginpagina van Open WebUI daarmee publiek bereikbaar is, gelden extra
+maatregelen:
+
+- Registratie blijft uit; accounts maak je zelf aan.
+- Sterke, unieke wachtwoorden voor `a.saebu`, `student`, `bezoeker` en de
+  collega-accounts.
+- Zet `student` en `bezoeker` tijdelijk uit zolang de tunnel openstaat (of
+  zorg dat hun wachtwoord niet bij studenten bekend is).
+- Tunnel alleen open zolang er getest wordt.
 - Deel de link alleen met de testgroep.
 
 ## Feedback verzamelen
@@ -77,8 +91,8 @@ wachttijden. Stel zo nodig `OLLAMA_NUM_PARALLEL` af met
 3. Testchats opruimen als die niet bewaard moeten blijven voordat studenten
    het model gebruiken.
 4. Feedback verwerken in de systeemprompt van het model.
-5. Voor een volgende ronde: de lijst met `--oauth-allow-email`-adressen
-   nalopen.
+5. `student` en `bezoeker` weer aanzetten als je ze had uitgezet, en
+   wachtwoorden wijzigen als die tijdens de test zijn gedeeld.
 
 ## Gecontroleerde stand (2026-11-02)
 
@@ -105,8 +119,7 @@ Alleen gelezen, niets gewijzigd.
 - [ ] Code interpreter uitgezet voor gebruikers, indien gewenst (Admin Panel →
       Settings → Users → Default Permissions → Features)
 - [ ] CORS vastgezet op de ngrok-URL (kan pas als de tunnel draait)
-- [ ] Tunnel gestart met `--oauth google` en `--oauth-allow-email` per collega
-      (niet met `--basic-auth`)
+- [ ] Tunnel gestart zonder `--basic-auth` of `--oauth` (alleen Open WebUI-login)
 - [ ] Link alleen met collega's gedeeld
 - [ ] Wachtwoorden van `a.saebu`, `student` en `bezoeker` sterk (of de laatste
       twee tijdelijk uitgezet)
